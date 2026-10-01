@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice & Audio Concert Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            cyan: '#00f3ff',
+                            magenta: '#ff0055',
+                            purple: '#9d00ff',
+                            dark: '#0a0a12',
+                            panel: '#121220'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glow-box {
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.15), inset 0 0 15px rgba(0, 243, 255, 0.05);
+        }
+        .glow-box-magenta {
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.15), inset 0 0 15px rgba(255, 0, 85, 0.05);
+        }
+        .bg-grid {
+            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+        input[type="range"] {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .concert-bg {
+            transition: background-color 0.06s ease-out;
+        }
+    </style>
+</head>
+<body id="bodyFrame" class="h-full bg-grid flex flex-col font-sans overflow-x-hidden antialiased select-none concert-bg">
+
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 sm:px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <div class="p-1.5 sm:p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
+                    <i data-lucide="activity" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">
+                        SONIC<span class="text-white font-light">SPECTRUM</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 hidden sm:block">Real-time Audio Analyzer & Concert Light System</p>
+                </div>
+            </div>
+
+            <!-- Status Indicator -->
+            <div id="statusBadge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full border border-slate-800 bg-slate-900/80 text-[10px] sm:text-xs font-medium text-slate-400">
+                <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-500 transition-all duration-300" id="statusDot"></span>
+                <span id="statusText">System Idle</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-4 sm:gap-6">
+        
+        <!-- Main Canvas Area -->
+        <section class="flex-1 flex flex-col gap-3 sm:gap-4 min-w-0">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                
+                <!-- Toggle Switches -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="toggleMicBtn" class="flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md">
+                        <i data-lucide="mic" id="micIcon" class="w-3.5 h-3.5"></i>
+                        <span id="micBtnText">Start Mic</span>
+                    </button>
+
+                    <div class="relative">
+                        <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
+                        <button id="fileBtn" class="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95">
+                            <i data-lucide="music" class="w-3.5 h-3.5"></i>
+                            <span id="fileBtnText">Play Audio File</span>
+                        </button>
+                    </div>
+                    
+                    <button id="freezeBtn" disabled class="p-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:text-white disabled:opacity-40 transition" title="Pause / Freeze">
+                        <i data-lucide="pause" id="freezeIcon" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Stats Counters -->
+                <div class="flex items-center justify-between sm:justify-end gap-3 text-[10px] sm:text-xs font-mono text-slate-400">
+                    <div id="filePlayName" class="text-cyan-400 font-bold truncate max-w-[120px] sm:max-w-[160px] hidden">No file loaded</div>
+                    <div class="bg-slate-950 px-2 py-1 rounded-md border border-slate-800/60">
+                        PEAK: <span id="peakDb" class="text-pink-400 font-bold">-INF dB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Central Visualizer Screen -->
+            <div id="canvasContainer" class="relative flex-1 min-h-[260px] sm:min-h-[400px] md:min-h-[460px] bg-slate-950/90 rounded-2xl border border-cyan-500/30 glow-box overflow-hidden flex items-center justify-center transition-all duration-500">
+                
+                <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#00f3ff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                
+                <!-- Overlay Prompter -->
+                <div id="placeholderOverlay" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center z-10 transition-opacity duration-300">
+                    <div class="p-3 sm:p-4 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-2 sm:mb-4 animate-pulse">
+                        <i data-lucide="mic-off" class="w-8 h-8 sm:w-10 sm:h-10"></i>
+                    </div>
+                    <h2 class="text-sm sm:text-lg font-semibold text-slate-200">Microphone Inactive</h2>
+                    <p class="text-[11px] sm:text-xs text-slate-400 max-w-xs mt-1">Tap "Start Mic" or "Play Audio File" to start the visualizer.</p>
+                </div>
+
+                <!-- Guided Error & Troubleshooter Overlay -->
+                <div id="errorOverlay" class="hidden absolute inset-0 bg-slate-950/95 z-20 flex flex-col items-center justify-center p-5 text-center overflow-y-auto">
+                    <div class="p-3 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 mb-2">
+                        <i data-lucide="shield-alert" class="w-6 h-6 animate-bounce"></i>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-bold text-pink-400" id="errorTitle">Mic Access Blocked</h3>
+                    <div class="text-[11px] sm:text-xs text-slate-300 max-w-sm mt-2 mb-4 text-left bg-slate-900/90 p-3 rounded-lg border border-slate-800 space-y-1.5" id="errorDetailBlock">
+                        <!-- Filled dynamically with specific instructions -->
+                    </div>
+                    <button id="dismissError" class="px-4 py-1.5 rounded-md bg-slate-800 border border-slate-700 text-xs text-slate-200 hover:bg-slate-700 active:scale-95">Dismiss</button>
+                </div>
+
+                <canvas id="visualizerCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+                <!-- Decibel Peak Meter Line -->
+                <div class="absolute bottom-2.5 left-3 right-3 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-full h-2 p-0.5 overflow-hidden flex items-center shadow-inner">
+                    <div id="inputLevelBar" class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-pink-500 rounded-full w-0 transition-all duration-75"></div>
+                </div>
+            </div>
+
+            <!-- Visualization Presets -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <button data-mode="bars" class="mode-btn active p-2 rounded-xl border border-cyan-500/50 bg-slate-900/80 hover:bg-slate-800 text-[11px] sm:text-xs font-medium text-cyan-300 flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Bars Mode
+                </button>
+                <button data-mode="wave" class="mode-btn p-2 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-800 text-[11px] sm:text-xs font-medium text-slate-400 flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <i data-lucide="waves" class="w-3.5 h-3.5"></i> Waveform
+                </button>
+                <button data-mode="radial" class="mode-btn p-2 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-800 text-[11px] sm:text-xs font-medium text-slate-400 flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <i data-lucide="disc" class="w-3.5 h-3.5"></i> Circular
+                </button>
+                <button data-mode="particles" class="mode-btn p-2 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-800 text-[11px] sm:text-xs font-medium text-slate-400 flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Particles
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Side Settings -->
+        <aside class="w-full lg:w-72 flex flex-col gap-4">
+            <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                
+                <!-- Concert Light Mode Switch -->
+                <div class="p-3 bg-cyan-950/30 border border-cyan-500/20 rounded-xl space-y-2">
+                    <label class="flex items-center justify-between text-xs font-bold text-cyan-400 cursor-pointer">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-400 animate-pulse"></i>
+                            Concert Light Mode
+                        </span>
+                        <input type="checkbox" id="concertLightToggle" class="w-4 h-4 accent-cyan-400 rounded cursor-pointer">
+                    </label>
+                    <p class="text-[10px] text-slate-400 leading-normal">
+                        Strobes background brightness in real time based on bass hits.
+                    </p>
+                </div>
+
+                <h2 class="text-xs sm:text-sm font-bold tracking-wider text-slate-300 uppercase flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i> Settings
+                </h2>
+
+                <!-- Theme / Palette -->
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-medium text-slate-400 flex justify-between">
+                        <span>Color Theme</span>
+                        <span id="currentThemeName" class="text-cyan-400">Cyberpunk</span>
+                    </label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button data-theme="cyberpunk" class="theme-btn active border-2 border-cyan-400 h-7 rounded-lg bg-gradient-to-r from-cyan-400 to-pink-500 shadow-sm" title="Cyberpunk"></button>
+                        <button data-theme="neon" class="theme-btn border border-slate-700 h-7 rounded-lg bg-gradient-to-r from-green-400 to-emerald-600 shadow-sm" title="Neon Green"></button>
+                        <button data-theme="sunset" class="theme-btn border border-slate-700 h-7 rounded-lg bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 shadow-sm" title="Sunset Fire"></button>
+                        <button data-theme="monochrome" class="theme-btn border border-slate-700 h-7 rounded-lg bg-gradient-to-r from-slate-200 to-slate-500 shadow-sm" title="Monochrome"></button>
+                    </div>
+                </div>
+
+                <!-- Sensitivity Gain -->
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <label for="gainControl" class="font-medium text-slate-400">Sensitivity Gain</label>
+                        <span id="gainVal" class="text-cyan-400 font-mono">1.5x</span>
+                    </div>
+                    <input type="range" id="gainControl" min="0.5" max="4.0" step="0.1" value="1.5" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                </div>
+
+                <!-- FFT Granularity -->
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <label for="fftSelect" class="font-medium text-slate-400">Resolution (Bars)</label>
+                        <span id="fftVal" class="text-cyan-400 font-mono">128</span>
+                    </div>
+                    <select id="fftSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-cyan-500">
+                        <option value="64">64 (Coarse - High Speed)</option>
+                        <option value="128" selected>128 (Balanced)</option>
+                        <option value="256">256 (High Detail)</option>
+                    </select>
+                </div>
+
+                <!-- Smoothing -->
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <label for="smoothingControl" class="font-medium text-slate-400">Smoothing Factor</label>
+                        <span id="smoothingVal" class="text-cyan-400 font-mono">0.85</span>
+                    </div>
+                    <input type="range" id="smoothingControl" min="0.1" max="0.95" step="0.05" value="0.85" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                </div>
+
+                <div class="pt-1.5 border-t border-slate-800 space-y-2">
+                    <label class="flex items-center justify-between text-[11px] text-slate-400 cursor-pointer">
+                        <span>Glow Visuals</span>
+                        <input type="checkbox" id="glowToggle" checked class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
+                    </label>
+                    <label class="flex items-center justify-between text-[11px] text-slate-400 cursor-pointer">
+                        <span>Mirrored</span>
+                        <input type="checkbox" id="mirrorToggle" checked class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
+                    </label>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const state = {
+            isListening: false,
+            isFrozen: false,
+            activeSource: null,
+            mode: 'bars',
+            theme: 'cyberpunk',
+            gain: 1.5,
+            fftSize: 128,
+            smoothing: 0.85,
+            glow: true,
+            mirror: true,
+            concertLight: false
+        };
+
+        if (window.innerWidth < 640) {
+            state.fftSize = 64; 
+            document.getElementById('fftSelect').value = "64";
+            document.getElementById('fftVal').textContent = "64";
+        }
+
+        const themes = {
+            cyberpunk: {
+                name: 'Cyberpunk',
+                primary: '#00f3ff',
+                secondary: '#ff0055',
+                tertiary: '#9d00ff',
+                bgGlow: 'rgba(0, 243, 255, 0.15)',
+                getGradient: (ctx, h) => {
+                    const g = ctx.createLinearGradient(0, h, 0, 0);
+                    g.addColorStop(0, '#9d00ff');
+                    g.addColorStop(0.5, '#ff0055');
+                    g.addColorStop(1, '#00f3ff');
+                    return g;
+                }
+            },
+            neon: {
+                name: 'Neon Green',
+                primary: '#10b981',
+                secondary: '#34d399',
+                tertiary: '#059669',
+                bgGlow: 'rgba(16, 185, 129, 0.15)',
+                getGradient: (ctx, h) => {
+                    const g = ctx.createLinearGradient(0, h, 0, 0);
+                    g.addColorStop(0, '#064e3b');
+                    g.addColorStop(0.5, '#10b981');
+                    g.addColorStop(1, '#a7f3d0');
+                    return g;
+                }
+            },
+            sunset: {
+                name: 'Sunset Fire',
+                primary: '#f59e0b',
+                secondary: '#f43f5e',
+                tertiary: '#8b5cf6',
+                bgGlow: 'rgba(245, 158, 11, 0.15)',
+                getGradient: (ctx, h) => {
+                    const g = ctx.createLinearGradient(0, h, 0, 0);
+                    g.addColorStop(0, '#8b5cf6');
+                    g.addColorStop(0.5, '#f43f5e');
+                    g.addColorStop(1, '#fef08a');
+                    return g;
+                }
+            },
+            monochrome: {
+                name: 'Monochrome',
+                primary: '#f8fafc',
+                secondary: '#94a3b8',
+                tertiary: '#334155',
+                bgGlow: 'rgba(255, 255, 255, 0.1)',
+                getGradient: (ctx, h) => {
+                    const g = ctx.createLinearGradient(0, h, 0, 0);
+                    g.addColorStop(0, '#334155');
+                    g.addColorStop(0.5, '#94a3b8');
+                    g.addColorStop(1, '#f8fafc');
+                    return g;
+                }
+            }
+        };
+
+        let audioCtx = null;
+        let analyserNode = null;
+        let gainNode = null;
+        let micStream = null;
+        let micSourceNode = null;
+        let fileSourceNode = null;
+        let audioPlayNode = null;
+        let animationFrameId = null;
+
+        const bodyFrame = document.getElementById('bodyFrame');
+        const canvas = document.getElementById('visualizerCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        function resizeCanvas() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const pixelRatio = Math.min(window.devicePixelRatio, 2);
+            canvas.width = rect.width * pixelRatio;
+            canvas.height = rect.height * pixelRatio;
+            ctx.resetTransform();
+            ctx.scale(pixelRatio, pixelRatio);
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const toggleMicBtn = document.getElementById('toggleMicBtn');
+        const micIcon = document.getElementById('micIcon');
+        const micBtnText = document.getElementById('micBtnText');
+        
+        const audioFileInput = document.getElementById('audioFileInput');
+        const fileBtn = document.getElementById('fileBtn');
+        const fileBtnText = document.getElementById('fileBtnText');
+        const filePlayName = document.getElementById('filePlayName');
+
+        const freezeBtn = document.getElementById('freezeBtn');
+        const freezeIcon = document.getElementById('freezeIcon');
+        const placeholderOverlay = document.getElementById('placeholderOverlay');
+        const errorOverlay = document.getElementById('errorOverlay');
+        const errorTitle = document.getElementById('errorTitle');
+        const errorDetailBlock = document.getElementById('errorDetailBlock');
+        const dismissError = document.getElementById('dismissError');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const peakDb = document.getElementById('peakDb');
+        const inputLevelBar = document.getElementById('inputLevelBar');
+
+        const gainControl = document.getElementById('gainControl');
+        const gainVal = document.getElementById('gainVal');
+        const fftSelect = document.getElementById('fftSelect');
+        const fftVal = document.getElementById('fftVal');
+        const smoothingControl = document.getElementById('smoothingControl');
+        const smoothingVal = document.getElementById('smoothingVal');
+        const glowToggle = document.getElementById('glowToggle');
+        const mirrorToggle = document.getElementById('mirrorToggle');
+        const concertLightToggle = document.getElementById('concertLightToggle');
+
+        let lastFrameTime = performance.now();
+        let frameCount = 0;
+        let particles = [];
+        let peakCaps = [];
+
+        function initAudioEngine() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyserNode = audioCtx.createAnalyser();
+                gainNode = audioCtx.createGain();
+                
+                analyserNode.fftSize = parseInt(state.fftSize) * 2; 
+                analyserNode.smoothingTimeConstant = parseFloat(state.smoothing);
+                gainNode.gain.value = parseFloat(state.gain);
+
+                gainNode.connect(analyserNode);
+            }
+        }
+
+        // --- Resilient Microphone Request Pipeline ---
+        async function startMicrophone() {
+            initAudioEngine();
+            disconnectFileSource();
+
+            // 1. Diagnose Secure Context
+            if (window.isSecureContext === false) {
+                showDiagnosticError(
+                    "Insecure Context Detected",
+                    `Microphone access is blocked by your browser because this site is loaded over HTTP or an untrusted IP address.
+                    <br><br><b>How to fix:</b>
+                    <ul class="list-disc pl-4 mt-1 space-y-1">
+                        <li>On Laptop: Open via <code>http://localhost:...</code> or <code>file:///</code>.</li>
+                        <li>On Phone: You must serve this page via <b>HTTPS</b> (e.g. upload to GitHub Pages, Cloudflare Tunnel, or Vercel).</li>
+                    </ul>`
+                );
+                return;
+            }
+
+            // 2. Check if mediaDevices exists
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showDiagnosticError(
+                    "Browser Not Supported",
+                    `Your current browser or in-app webview does not support <code>getUserMedia</code>. Open directly in Safari (iOS) or Chrome (Android).`
+                );
+                return;
+            }
+
+            try {
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+
+                // Attempt 1: Optimal constraints
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: { echoCancellation: true, noiseSuppression: true } 
+                    });
+                } catch (firstErr) {
+                    // Attempt 2: Minimal fallback constraints (fixes most mobile chip rejections)
+                    console.warn("Retrying with raw audio constraints...", firstErr);
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+
+                micSourceNode = audioCtx.createMediaStreamSource(micStream);
+                micSourceNode.connect(gainNode);
+
+                state.isListening = true;
+                state.activeSource = 'mic';
+                updateSourceUI();
+                placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
+                errorOverlay.classList.add('hidden');
+                freezeBtn.disabled = false;
+
+                resizeCanvas();
+                draw();
+
+            } catch (err) {
+                console.error("Mic Access Error:", err);
+                
+                let explanation = "";
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    explanation = `
+                        <b>Browser has blocked access.</b>
+                        <ul class="list-disc pl-4 mt-1.5 space-y-1">
+                            <li><b>On Laptop:</b> Click the lock / settings icon next to the URL in your address bar and toggle Microphone to <b>Allow</b>.</li>
+                            <li><b>On iPhone (iOS):</b> Go to Settings ➔ Safari ➔ Microphone ➔ Set to "Allow".</li>
+                            <li><b>On Android:</b> Go to Settings ➔ Apps ➔ Chrome ➔ Permissions ➔ Microphone ➔ Allow.</li>
+                        </ul>
+                    `;
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    explanation = "No microphone hardware detected on this device.";
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    explanation = "The microphone is currently in use by another app (e.g. Zoom, Teams, or another browser tab).";
+                } else {
+                    explanation = `Error details: ${err.message || err.name}`;
+                }
+
+                showDiagnosticError("Mic Permission Blocked", explanation);
+                stopAllAudio();
+            }
+        }
+
+        function showDiagnosticError(title, htmlContent) {
+            errorTitle.textContent = title;
+            errorDetailBlock.innerHTML = htmlContent;
+            errorOverlay.classList.remove('hidden');
+        }
+
+        function disconnectFileSource() {
+            if (audioPlayNode) {
+                try { audioPlayNode.stop(); } catch(e) {}
+                audioPlayNode = null;
+            }
+            if (fileSourceNode) {
+                fileSourceNode.disconnect();
+                fileSourceNode = null;
+            }
+            filePlayName.classList.add('hidden');
+            fileBtn.className = "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
+            fileBtnText.textContent = "Play Audio File";
+        }
+
+        function disconnectMicSource() {
+            if (micStream) {
+                micStream.getTracks().forEach(track => track.stop());
+                micStream = null;
+            }
+            if (micSourceNode) {
+                micSourceNode.disconnect();
+                micSourceNode = null;
+            }
+            toggleMicBtn.className = "flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md";
+            micBtnText.textContent = "Start Mic";
+            micIcon.setAttribute('data-lucide', 'mic');
+        }
+
+        function stopAllAudio() {
+            disconnectMicSource();
+            disconnectFileSource();
+
+            state.isListening = false;
+            state.isFrozen = false;
+            state.activeSource = null;
+            
+            updateSourceUI();
+            placeholderOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            freezeBtn.disabled = true;
+            inputLevelBar.style.width = '0%';
+            bodyFrame.style.backgroundColor = '';
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            clearCanvas();
+        }
+
+        audioFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            initAudioEngine();
+            disconnectMicSource();
+            disconnectFileSource();
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    statusText.textContent = "Decoding track...";
+                    const buffer = await audioCtx.decodeAudioData(event.target.result);
+                    
+                    audioPlayNode = audioCtx.createBufferSource();
+                    audioPlayNode.buffer = buffer;
+                    audioPlayNode.connect(gainNode);
+                    audioPlayNode.connect(audioCtx.destination);
+
+                    audioPlayNode.onended = () => stopAllAudio();
+                    audioPlayNode.start(0);
+
+                    state.isListening = true;
+                    state.activeSource = 'file';
+                    
+                    filePlayName.textContent = file.name;
+                    filePlayName.classList.remove('hidden');
+                    updateSourceUI();
+
+                    placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
+                    errorOverlay.classList.add('hidden');
+                    freezeBtn.disabled = false;
+
+                    resizeCanvas();
+                    draw();
+
+                } catch (err) {
+                    showDiagnosticError("Decoding Error", "Could not decode audio. Try playing an MP3 or WAV format.");
+                    stopAllAudio();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function updateSourceUI() {
+            if (state.activeSource === 'mic') {
+                toggleMicBtn.className = "flex items-center gap-1.5 px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 text-white active:scale-95 shadow-md";
+                micBtnText.textContent = "Stop Mic";
+                micIcon.setAttribute('data-lucide', 'square');
+
+                statusDot.className = "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-cyan-400 animate-ping";
+                statusText.textContent = "Listening Live";
+                statusText.className = "text-cyan-400";
+            } else if (state.activeSource === 'file') {
+                fileBtn.className = "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95";
+                fileBtnText.textContent = "Stop Track";
+
+                statusDot.className = "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping";
+                statusText.textContent = "Playing File";
+                statusText.className = "text-emerald-400";
+            } else {
+                statusDot.className = "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-500";
+                statusText.textContent = "System Idle";
+                statusText.className = "text-slate-400";
+            }
+            lucide.createIcons();
+        }
+
+        dismissError.addEventListener('click', () => {
+            errorOverlay.classList.add('hidden');
+        });
+
+        function clearCanvas() {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+        }
+
+        function draw() {
+            if (!state.isListening) return;
+
+            animationFrameId = requestAnimationFrame(draw);
+
+            if (state.isFrozen) return;
+
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            if (state.mode === 'wave') {
+                analyserNode.getByteTimeDomainData(dataArray);
+            } else {
+                analyserNode.getByteFrequencyData(dataArray);
+            }
+
+            let maxVal = 0;
+            let sumSquares = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                if (dataArray[i] > maxVal) maxVal = dataArray[i];
+                if (state.mode === 'wave') {
+                    const normalized = (dataArray[i] - 128) / 128;
+                    sumSquares += normalized * normalized;
+                } else {
+                    const normalized = dataArray[i] / 255;
+                    sumSquares += normalized * normalized;
+                }
+            }
+
+            const rms = Math.sqrt(sumSquares / bufferLength);
+            const levelPct = Math.min(100, Math.round(rms * 150));
+            inputLevelBar.style.width = `${levelPct}%`;
+
+            const db = maxVal > 0 ? Math.round(20 * Math.log10(maxVal / 255)) : -Infinity;
+            peakDb.textContent = db === -Infinity ? '-INF dB' : `${db} dB`;
+
+            // Concert Light Engine
+            if (state.concertLight && state.mode !== 'wave') {
+                let bassSum = 0;
+                const bassBins = Math.min(4, bufferLength);
+                for (let i = 0; i < bassBins; i++) {
+                    bassSum += dataArray[i];
+                }
+                const bassIntensity = (bassSum / bassBins) / 255;
+
+                if (bassIntensity > 0.35) {
+                    const themeColors = themes[state.theme];
+                    const hexAlpha = Math.round(bassIntensity * 120).toString(16).padStart(2, '0');
+                    bodyFrame.style.backgroundColor = `${themeColors.primary}${hexAlpha}`;
+                } else {
+                    bodyFrame.style.backgroundColor = 'rgba(10, 10, 18, 1)';
+                }
+            } else {
+                bodyFrame.style.backgroundColor = '';
+            }
+
+            ctx.fillStyle = 'rgba(10, 10, 18, 0.22)'; 
+            ctx.fillRect(0, 0, w, h);
+
+            switch (state.mode) {
+                case 'bars':
+                    renderBars(dataArray, bufferLength, w, h);
+                    break;
+                case 'wave':
+                    renderWaveform(dataArray, bufferLength, w, h);
+                    break;
+                case 'radial':
+                    renderRadial(dataArray, bufferLength, w, h);
+                    break;
+                case 'particles':
+                    renderParticles(dataArray, bufferLength, w, h);
+                    break;
+            }
+        }
+
+        function renderBars(dataArray, bufferLength, w, h) {
+            const theme = themes[state.theme];
+            const useMirror = state.mirror;
+            const activeBins = Math.floor(bufferLength * 0.7);
+            const itemsCount = useMirror ? Math.floor(activeBins / 2) : activeBins;
+            const gap = window.innerWidth < 640 ? 2 : 3;
+            const barWidth = Math.max(1.5, (w / itemsCount) - gap);
+
+            ctx.shadowBlur = state.glow ? 10 : 0;
+            ctx.shadowColor = theme.primary;
+
+            if (peakCaps.length !== itemsCount) {
+                peakCaps = Array(itemsCount).fill(0).map(() => ({ val: 0, velocity: 0 }));
+            }
+
+            for (let i = 0; i < itemsCount; i++) {
+                const value = dataArray[i];
+                const barHeight = (value / 255) * (h * 0.72);
+
+                const grad = theme.getGradient(ctx, h);
+                ctx.fillStyle = grad;
+
+                const cap = peakCaps[i];
+                if (barHeight > cap.val) {
+                    cap.val = barHeight;
+                    cap.velocity = 0.5;
+                } else {
+                    cap.velocity += 0.22;
+                    cap.val = Math.max(0, cap.val - cap.velocity);
+                }
+
+                if (useMirror) {
+                    const xLeft = (w / 2) - (i * (barWidth + gap)) - barWidth;
+                    const xRight = (w / 2) + (i * (barWidth + gap));
+                    const y = h - barHeight - 15;
+
+                    ctx.fillRect(xLeft, y, barWidth, barHeight);
+                    ctx.fillRect(xRight, y, barWidth, barHeight);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(xLeft, h - cap.val - 18, barWidth, 2);
+                    ctx.fillRect(xRight, h - cap.val - 18, barWidth, 2);
+                } else {
+                    const x = i * (barWidth + gap);
+                    const y = h - barHeight - 15;
+
+                    ctx.fillRect(x, y, barWidth, barHeight);
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, h - cap.val - 18, barWidth, 2);
+                }
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        function renderWaveform(dataArray, bufferLength, w, h) {
+            const theme = themes[state.theme];
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = theme.primary;
+            ctx.shadowBlur = state.glow ? 12 : 0;
+            ctx.shadowColor = theme.primary;
+
+            ctx.beginPath();
+            const sliceWidth = w / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = (v * h) / 2;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+            fillGrad.addColorStop(0, theme.bgGlow);
+            fillGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = fillGrad;
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+        }
+
+        function renderRadial(dataArray, bufferLength, w, h) {
+            const theme = themes[state.theme];
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const baseRadius = Math.min(w, h) * (window.innerWidth < 640 ? 0.18 : 0.22);
+
+            ctx.shadowBlur = state.glow ? 12 : 0;
+            ctx.shadowColor = theme.primary;
+
+            const bars = Math.floor(bufferLength * (window.innerWidth < 640 ? 0.5 : 0.65));
+            const angleStep = (Math.PI * 2) / bars;
+
+            for (let i = 0; i < bars; i++) {
+                const amplitude = dataArray[i] / 255;
+                const barLen = amplitude * (Math.min(w, h) * 0.25);
+                const angle = i * angleStep;
+
+                const x1 = centerX + Math.cos(angle) * baseRadius;
+                const y1 = centerY + Math.sin(angle) * baseRadius;
+                const x2 = centerX + Math.cos(angle) * (baseRadius + barLen);
+                const y2 = centerY + Math.sin(angle) * (baseRadius + barLen);
+
+                ctx.strokeStyle = theme.getGradient(ctx, h);
+                ctx.lineWidth = window.innerWidth < 640 ? 2.5 : 3.5;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            const avgAmp = dataArray.reduce((a, b) => a + b, 0) / bufferLength / 255;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, baseRadius * 0.85 + avgAmp * 15, 0, Math.PI * 2);
+            ctx.fillStyle = theme.primary;
+            ctx.globalAlpha = 0.25 + avgAmp * 0.45;
+            ctx.fill();
+
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+        }
+
+        function renderParticles(dataArray, bufferLength, w, h) {
+            const theme = themes[state.theme];
+            const avgAmp = dataArray.reduce((a, b) => a + b, 0) / bufferLength / 255;
+            const isMobile = window.innerWidth < 640;
+
+            const maxParticles = isMobile ? 80 : 220;
+            const maxSpawnCount = isMobile ? 3 : 6;
+
+            if (avgAmp > 0.08 && particles.length < maxParticles) {
+                const spawnCount = Math.min(maxSpawnCount, Math.ceil(avgAmp * 8));
+                for (let i = 0; i < spawnCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = (Math.random() * 3.0 + 1) * (avgAmp * 2.5);
+                    
+                    particles.push({
+                        x: w / 2,
+                        y: h / 2,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - (avgAmp * 0.3),
+                        radius: Math.random() * (isMobile ? 2.5 : 3.5) + 1,
+                        alpha: 1.0,
+                        color: Math.random() > 0.45 ? theme.primary : theme.secondary
+                    });
+                }
+            }
+
+            ctx.shadowBlur = state.glow ? 10 : 0;
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= isMobile ? 0.02 : 0.012;
+
+                if (p.alpha <= 0 || p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+        }
+
+        // --- Event Listeners ---
+        toggleMicBtn.addEventListener('click', () => {
+            if (state.activeSource === 'mic') {
+                stopAllAudio();
+            } else {
+                startMicrophone();
+            }
+        });
+
+        fileBtn.addEventListener('click', () => {
+            if (state.activeSource === 'file') {
+                stopAllAudio();
+            } else {
+                audioFileInput.click();
+            }
+        });
+
+        freezeBtn.addEventListener('click', () => {
+            state.isFrozen = !state.isFrozen;
+            if (state.isFrozen) {
+                freezeBtn.classList.add('bg-cyan-500/20', 'border-cyan-500', 'text-cyan-400');
+                freezeIcon.setAttribute('data-lucide', 'play');
+            } else {
+                freezeBtn.classList.remove('bg-cyan-500/20', 'border-cyan-500', 'text-cyan-400');
+                freezeIcon.setAttribute('data-lucide', 'pause');
+            }
+            lucide.createIcons();
+        });
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget;
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    b.classList.remove('active', 'border-cyan-500/50', 'bg-slate-900/80', 'text-cyan-300');
+                    b.classList.add('border-slate-800', 'bg-slate-900/40', 'text-slate-400');
+                });
+                target.classList.add('active', 'border-cyan-500/50', 'bg-slate-900/80', 'text-cyan-300');
+                target.classList.remove('border-slate-800', 'bg-slate-900/40', 'text-slate-400');
+                state.mode = target.getAttribute('data-mode');
+            });
+        });
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const themeKey = e.currentTarget.getAttribute('data-theme');
+                state.theme = themeKey;
+
+                document.querySelectorAll('.theme-btn').forEach(b => {
+                    b.classList.remove('border-2', 'border-cyan-400');
+                    b.classList.add('border', 'border-slate-700');
+                });
+                e.currentTarget.classList.remove('border', 'border-slate-700');
+                e.currentTarget.classList.add('border-2', 'border-cyan-400');
+
+                document.getElementById('currentThemeName').textContent = themes[themeKey].name;
+
+                if (themeKey === 'sunset' || themeKey === 'cyberpunk') {
+                    canvasContainer.className = "relative flex-1 min-h-[260px] sm:min-h-[400px] md:min-h-[460px] bg-slate-950 rounded-2xl border border-pink-500/30 glow-box-magenta overflow-hidden flex items-center justify-center transition-all duration-500";
+                } else {
+                    canvasContainer.className = "relative flex-1 min-h-[260px] sm:min-h-[400px] md:min-h-[460px] bg-slate-950 rounded-2xl border border-cyan-500/30 glow-box overflow-hidden flex items-center justify-center transition-all duration-500";
+                }
+            });
+        });
+
+        gainControl.addEventListener('input', (e) => {
+            state.gain = parseFloat(e.target.value);
+            gainVal.textContent = `${state.gain.toFixed(1)}x`;
+            if (gainNode) gainNode.gain.value = state.gain;
+        });
+
+        fftSelect.addEventListener('change', (e) => {
+            state.fftSize = parseInt(e.target.value);
+            fftVal.textContent = state.fftSize;
+            if (analyserNode) analyserNode.fftSize = state.fftSize * 2;
+        });
+
+        smoothingControl.addEventListener('input', (e) => {
+            state.smoothing = parseFloat(e.target.value);
+            smoothingVal.textContent = state.smoothing.toFixed(2);
+            if (analyserNode) analyserNode.smoothingTimeConstant = state.smoothing;
+        });
+
+        glowToggle.addEventListener('change', (e) => state.glow = e.target.checked);
+        mirrorToggle.addEventListener('change', (e) => state.mirror = e.target.checked);
+        
+        concertLightToggle.addEventListener('change', (e) => {
+            state.concertLight = e.target.checked;
+            if (!state.concertLight) bodyFrame.style.backgroundColor = '';
+        });
+
+    </script>
+</body>
+</html>
