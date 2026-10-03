@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-[100dvh] w-full overflow-hidden bg-slate-950 text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SonicSpectrum Visualizer</title>
+    <title>SonicSpectrum Concert Visualizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -18,23 +18,28 @@
         };
     </script>
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
+        /* Touch friendly optimizations */
+        * { 
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: manipulation;
+        }
         .glow-box { box-shadow: 0 0 25px rgba(0, 243, 255, 0.1), inset 0 0 15px rgba(0, 243, 255, 0.03); }
         .glow-box-magenta { box-shadow: 0 0 25px rgba(255, 0, 85, 0.1), inset 0 0 15px rgba(255, 0, 85, 0.03); }
         .concert-bg { transition: background-color 0.05s ease-out; }
+        
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #00f3ff;
             cursor: pointer;
             box-shadow: 0 0 8px #00f3ff;
         }
         input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #00f3ff;
             cursor: pointer;
@@ -43,9 +48,9 @@
         }
     </style>
 </head>
-<body id="bodyFrame" class="h-full flex flex-col font-sans overflow-hidden antialiased select-none bg-[#030206] concert-bg">
+<body id="bodyFrame" class="h-[100dvh] w-full flex flex-col font-sans overflow-hidden antialiased select-none bg-[#030206] concert-bg pb-[safe-area-inset-bottom]">
 
-    <!-- Top App Header -->
+    <!-- Top Header (No shrink on mobile) -->
     <header class="border-b border-slate-900/60 bg-slate-950/80 backdrop-blur-md px-4 py-2.5 sm:px-6 z-20 shrink-0">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
@@ -63,19 +68,19 @@
         </div>
     </header>
 
-    <!-- Main Workspace Container -->
-    <main class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-2 sm:p-4 lg:p-6 gap-3 sm:gap-4 overflow-hidden">
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-2 sm:p-4 gap-3 sm:gap-4 overflow-hidden min-h-0">
         
-        <!-- Canvas Screen Container -->
+        <!-- Canvas Visualizer Screen (Forces maximum container limits) -->
         <div id="canvasContainer" class="relative flex-1 bg-[#06050a]/95 rounded-2xl border border-cyan-500/20 glow-box overflow-hidden flex items-center justify-center transition-all duration-500 min-h-0">
             <canvas id="visualizerCanvas" class="absolute inset-0 w-full h-full block z-10"></canvas>
 
-            <!-- Input Level Meter Bar -->
+            <!-- Decibel Level Meter Bar overlay -->
             <div class="absolute bottom-2.5 left-3 right-3 bg-slate-900/60 backdrop-blur border border-slate-800/40 rounded-full h-1.5 p-0.5 overflow-hidden flex items-center z-20">
                 <div id="inputLevelBar" class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-pink-500 rounded-full w-0 transition-all duration-75"></div>
             </div>
 
-            <!-- Idle Placeholder Overlay -->
+            <!-- Start experience prompt overlay -->
             <div id="placeholderOverlay" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center z-20 transition-opacity duration-300 bg-slate-950/40 backdrop-blur-sm">
                 <div class="p-3 sm:p-4 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-2 sm:mb-3 animate-pulse">
                     <i data-lucide="play" class="w-6 h-6"></i>
@@ -84,7 +89,7 @@
                 <p class="text-[10px] sm:text-xs text-slate-400 max-w-xs mt-1">Tap Microphone or load a song file below</p>
             </div>
 
-            <!-- Error Modal Overlay -->
+            <!-- Error Modal Diagnostics Overlay -->
             <div id="errorOverlay" class="hidden absolute inset-0 bg-slate-950/95 z-30 flex flex-col items-center justify-center p-5 text-center overflow-y-auto">
                 <div class="p-3 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 mb-2">
                     <i data-lucide="shield-alert" class="w-6 h-6 animate-bounce"></i>
@@ -95,45 +100,45 @@
             </div>
         </div>
 
-        <!-- Controls Side / Bottom Panel -->
+        <!-- Interface Control Deck Panel -->
         <div class="lg:w-80 shrink-0 flex flex-col gap-2 z-20">
             
-            <!-- Quick Audio Action Bar -->
-            <div class="flex items-center gap-1.5 bg-slate-900/60 p-2 rounded-xl border border-slate-900/80">
-                <button id="toggleMicBtn" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md">
+            <!-- Sources Row -->
+            <div class="flex items-center gap-1.5 bg-slate-900/60 p-2 rounded-xl border border-slate-900/80 shrink-0">
+                <button id="toggleMicBtn" class="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md">
                     <i data-lucide="mic" id="micIcon" class="w-3.5 h-3.5"></i>
                     <span id="micBtnText">Use Mic</span>
                 </button>
                 <div class="flex-1 relative">
                     <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
-                    <button id="fileBtn" class="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95">
+                    <button id="fileBtn" class="w-full flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95">
                         <i data-lucide="music" class="w-3.5 h-3.5"></i>
                         <span id="fileBtnText">Load File</span>
                     </button>
                 </div>
-                <button id="freezeBtn" disabled class="p-2.5 rounded-lg border border-slate-800 bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 transition" title="Freeze frame">
+                <button id="freezeBtn" disabled class="p-3 rounded-lg border border-slate-800 bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 transition" title="Freeze frame">
                     <i data-lucide="pause" id="freezeIcon" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <!-- Visual Presets Bar -->
-            <div class="grid grid-cols-4 gap-1">
-                <button data-mode="bars" class="mode-btn active py-2 rounded-lg border border-cyan-500/30 bg-slate-900/40 text-[10px] font-bold text-cyan-300 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <!-- Visualization Presets -->
+            <div class="grid grid-cols-4 gap-1 shrink-0">
+                <button data-mode="bars" class="mode-btn active py-2.5 rounded-lg border border-cyan-500/30 bg-slate-900/40 text-[10px] font-bold text-cyan-300 flex flex-col items-center justify-center gap-1 transition active:scale-95">
                     <i data-lucide="bar-chart-3" class="w-4 h-4"></i><span>Bars</span>
                 </button>
-                <button data-mode="wave" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+                <button data-mode="wave" class="mode-btn py-2.5 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
                     <i data-lucide="waves" class="w-4 h-4"></i><span>Wave</span>
                 </button>
-                <button data-mode="radial" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+                <button data-mode="radial" class="mode-btn py-2.5 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
                     <i data-lucide="disc" class="w-4 h-4"></i><span>Radial</span>
                 </button>
-                <button data-mode="particles" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+                <button data-mode="particles" class="mode-btn py-2.5 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
                     <i data-lucide="sparkles" class="w-4 h-4"></i><span>Particles</span>
                 </button>
             </div>
 
-            <!-- Active Track Bar (File Mode) -->
-            <div id="playingTrackIndicator" class="hidden flex items-center justify-between p-2 bg-cyan-950/20 border border-cyan-500/20 rounded-xl text-xs">
+            <!-- Active Track Overlay Info -->
+            <div id="playingTrackIndicator" class="hidden flex items-center justify-between p-2 bg-cyan-950/20 border border-cyan-500/20 rounded-xl text-xs shrink-0">
                 <span class="flex items-center gap-1.5 text-cyan-400 truncate pr-3">
                     <i data-lucide="disc" class="w-3.5 h-3.5 animate-spin"></i>
                     <span id="currentTrackLabel" class="truncate font-medium">Track</span>
@@ -141,9 +146,9 @@
                 <span id="peakDbDisplay" class="font-mono text-[10px] text-slate-400 shrink-0">PEAK: -INF dB</span>
             </div>
 
-            <!-- Expandable Settings Panel -->
-            <div class="bg-slate-900/60 rounded-xl border border-slate-900/80 overflow-hidden">
-                <button id="settingsHeaderBtn" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">
+            <!-- Settings Expanded Drawers -->
+            <div class="bg-slate-900/60 rounded-xl border border-slate-900/80 overflow-hidden shrink-0">
+                <button id="settingsHeaderBtn" class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-200">
                     <span class="flex items-center gap-1.5">
                         <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i>Settings & Concert Mode
                     </span>
@@ -173,7 +178,7 @@
                         </label>
                     </div>
 
-                    <!-- Color Palettes -->
+                    <!-- Themes Selection -->
                     <div class="space-y-1">
                         <div class="flex justify-between text-[10px] text-slate-400">
                             <span>Color Scheme</span>
@@ -187,8 +192,8 @@
                         </div>
                     </div>
 
-                    <!-- Sliders -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <!-- Sliders Adjustments -->
+                    <div class="grid grid-cols-1 gap-2 pt-1">
                         <div class="space-y-0.5">
                             <div class="flex justify-between text-[10px] text-slate-400">
                                 <span>Sensitivity Gain</span>
@@ -212,24 +217,24 @@
     <script>
         lucide.createIcons();
 
-        // --- System State ---
-        const state = {
-            isListening: false,
-            isFrozen: false,
-            activeSource: null,
-            mode: 'bars',
-            theme: 'cyberpunk',
-            gain: 1.5,
-            fftSize: 128,
-            smoothing: 0.85,
-            glow: true,
-            mirror: true,
-            concertLight: true,
-            bgCycleHue: 0
+        // --- System State Configuration ---
+        const state = { 
+            isListening: false, 
+            isFrozen: false, 
+            activeSource: null, 
+            mode: 'bars', 
+            theme: 'cyberpunk', 
+            gain: 1.5, 
+            fftSize: 128, 
+            smoothing: 0.85, 
+            glow: true, 
+            mirror: true, 
+            concertLight: true, 
+            bgCycleHue: 0 
         };
 
-        if (window.innerWidth < 640) {
-            state.fftSize = 64;
+        if (window.innerWidth < 768) {
+            state.fftSize = 64; // Performance throttle optimized for mobile
         }
 
         const themes = {
@@ -243,7 +248,7 @@
         let particles = [], peakCaps = [];
         let beatCutoff = 0, beatDecayRate = 0.96, strobePulse = 0;
 
-        // --- Central DOM Object Definition ---
+        // --- DOM Elements mapping ---
         const dom = {
             bodyFrame: document.getElementById('bodyFrame'),
             canvas: document.getElementById('visualizerCanvas'),
@@ -289,8 +294,6 @@
             ctx.resetTransform();
             ctx.scale(r, r);
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
         function initAudioEngine() {
             if (!audioCtx) {
@@ -307,12 +310,17 @@
         async function startMicrophone() {
             initAudioEngine();
             disconnectFileSource();
+            
             if (!window.isSecureContext) {
-                return showDiagnosticError("Insecure Context", "Microphone access requires a secure connection (HTTPS or localhost).");
+                return showDiagnosticError(
+                    "Security Block (HTTPS Needed)", 
+                    `On GitHub Pages, you must open the page using <b>https://</b>. Mobile browsers completely disable media APIs over insecure HTTP protocols.`
+                );
             }
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                return showDiagnosticError("Browser Not Supported", "Your browser does not support Web Audio APIs. Open directly in Safari or Chrome.");
+                return showDiagnosticError("Browser Incompatible", "Your mobile browser or current WebView doesn't support the required Audio APIs. Try opening directly in Safari (iOS) or Chrome (Android).");
             }
+
             try {
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
                 try {
@@ -331,14 +339,10 @@
                 resizeCanvas();
                 draw();
             } catch (err) {
-                console.error("Mic Access Error:", err);
+                console.error("Mic Error:", err);
                 let d = `Error: ${err.message || err.name}`;
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    d = "<b>Access Blocked:</b> Please allow microphone permissions in your browser and system settings.";
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    d = "No microphone hardware was detected on your device.";
-                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                    d = "Microphone is in use by another app (e.g. Teams, Zoom, or another browser tab).";
+                    d = `<b>Microphone permissions blocked.</b><br><br>Toggle microphone permissions "ON" for Safari/Chrome inside your iOS or Android System Privacy Settings.`;
                 }
                 showDiagnosticError("Mic Access Blocked", d);
                 stopAllAudio();
@@ -355,14 +359,14 @@
             if (audioPlayNode) { try { audioPlayNode.stop(); } catch(e) {} audioPlayNode = null; }
             if (fileSourceNode) { fileSourceNode.disconnect(); fileSourceNode = null; }
             dom.playingTrackIndicator.classList.add('hidden');
-            dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
+            dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
             dom.fileBtnText.textContent = "Load File";
         }
 
         function disconnectMicSource() {
             if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
             if (micSourceNode) { micSourceNode.disconnect(); micSourceNode = null; }
-            dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md";
+            dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md";
             dom.micBtnText.textContent = "Use Mic";
         }
 
@@ -409,22 +413,22 @@
                     resizeCanvas();
                     draw();
                 } catch (err) {
-                    showDiagnosticError("Decoding Error", "Could not decode audio. Please try an MP3 or WAV file.");
+                    showDiagnosticError("Decoding Error", "Could not decode audio. Try using an MP3 or WAV file.");
                     stopAllAudio();
                 }
             };
             reader.readAsArrayBuffer(file);
         });
-
+        
         function updateSourceUI() {
             if (state.activeSource === 'mic') {
-                dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95 shadow-md";
+                dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95 shadow-md";
                 dom.micBtnText.textContent = "Stop Mic";
                 dom.statusDot.className = "w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping";
                 dom.statusText.textContent = "Listening Live";
                 dom.statusText.className = "text-cyan-400";
             } else if (state.activeSource === 'file') {
-                dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95";
+                dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-3 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95";
                 dom.fileBtnText.textContent = "Stop Track";
                 dom.statusDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
                 dom.statusText.textContent = "Playing File";
@@ -435,12 +439,6 @@
                 dom.statusText.className = "text-slate-400";
             }
             lucide.createIcons();
-        }
-
-        function clearCanvas() {
-            const w = dom.canvas.width / window.devicePixelRatio;
-            const h = dom.canvas.height / window.devicePixelRatio;
-            ctx.clearRect(0, 0, w, h);
         }
 
         // --- Render Loop ---
@@ -458,7 +456,7 @@
             analyserNode.getByteFrequencyData(freqData);
             analyserNode.getByteTimeDomainData(timeData);
 
-            // Volume Calculation (RMS)
+            // Calculate Volume RMS
             let sumSquares = 0, peakSample = 0;
             for (let i = 0; i < bufferLength; i++) {
                 const norm = (timeData[i] - 128) / 128;
@@ -476,7 +474,7 @@
                 dom.peakDbDisplay.textContent = `PEAK: ${db === -Infinity ? '-INF dB' : db + ' dB'}`;
             }
 
-            // Beat Tracking (Sub-bass)
+            // Beat Onset detection (bass frequencies)
             let bassSum = 0;
             const bassBins = Math.max(2, Math.floor(bufferLength * 0.08));
             for (let i = 0; i < bassBins; i++) bassSum += freqData[i];
@@ -490,12 +488,13 @@
                 strobePulse = Math.max(0, strobePulse - 0.06);
             }
 
-            // Background Light Pulse
+            // Color Hue calculations
             state.bgCycleHue = (state.bgCycleHue + 0.3 + (roomLoudness * 0.8)) % 360;
             let hue = state.bgCycleHue;
             if (state.theme === 'neon') hue = 140 + (currentBass * 30);
             if (state.theme === 'sunset') hue = 10 + (currentBass * 45);
 
+            // Radial backdrop glow
             const gradRadius = Math.max(w, h) * (0.35 + (roomLoudness * 0.45) + (strobePulse * 0.2));
             const gradBg = ctx.createRadialGradient(w / 2, h / 2, 5, w / 2, h / 2, gradRadius);
             const lightLuminance = 6 + (roomLoudness * 22) + (strobePulse * 28);
@@ -720,15 +719,16 @@
             dom.gainVal.textContent = `${state.gain.toFixed(1)}x`;
             if (gainNode) gainNode.gain.value = state.gain;
         });
-
+        
         dom.smoothingControl.addEventListener('input', e => {
             state.smoothing = parseFloat(e.target.value);
             dom.smoothingVal.textContent = state.smoothing.toFixed(2);
             if (analyserNode) analyserNode.smoothingTimeConstant = state.smoothing;
         });
-
+        
         dom.glowToggle.addEventListener('change', e => state.glow = e.target.checked);
         dom.mirrorToggle.addEventListener('change', e => state.mirror = e.target.checked);
+        
         dom.concertLightToggle.addEventListener('change', e => {
             state.concertLight = e.target.checked;
             if (!state.concertLight) dom.bodyFrame.style.backgroundColor = '';
