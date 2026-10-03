@@ -34,7 +34,9 @@
         .glow-box-magenta {
             box-shadow: 0 0 25px rgba(255, 0, 85, 0.1), inset 0 0 15px rgba(255, 0, 85, 0.03);
         }
-        * { -webkit-tap-highlight-color: transparent; }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -54,9 +56,12 @@
             box-shadow: 0 0 8px #00f3ff;
             border: none;
         }
+        .concert-bg {
+            transition: background-color 0.04s ease-out;
+        }
     </style>
 </head>
-<body id="bodyFrame" class="h-full flex flex-col font-sans overflow-hidden antialiased select-none bg-[#030206] transition-colors duration-200">
+<body id="bodyFrame" class="h-full flex flex-col font-sans overflow-hidden antialiased select-none bg-[#030206] concert-bg">
 
     <!-- Header -->
     <header class="border-b border-slate-900/60 bg-slate-950/80 backdrop-blur-md px-4 py-3 sm:px-8 z-20 shrink-0">
@@ -71,6 +76,8 @@
                     </h1>
                 </div>
             </div>
+
+            <!-- Status Indicator -->
             <div id="statusBadge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full border border-slate-900 bg-slate-900/40 text-[10px] sm:text-xs font-medium text-slate-400">
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-500 transition-all duration-300" id="statusDot"></span>
                 <span id="statusText">System Idle</span>
@@ -81,87 +88,118 @@
     <!-- Main Container -->
     <main class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-2 sm:p-4 lg:p-6 gap-4 overflow-hidden">
         
-        <!-- Main Canvas Area -->
+        <!-- Live Action Canvas Area -->
         <div id="canvasContainer" class="relative flex-1 bg-[#06050a]/95 rounded-2xl border border-cyan-500/20 glow-box overflow-hidden flex items-center justify-center transition-all duration-500">
-            <canvas id="visualizerCanvas" class="absolute inset-0 w-full h-full block z-10"></canvas>
             
+            <canvas id="visualizerCanvas" class="absolute inset-0 w-full h-full block z-10"></canvas>
+
+            <!-- Decibel Peak Meter Bar overlay at bottom of canvas -->
+            <div class="absolute bottom-2.5 left-3 right-3 bg-slate-900/60 backdrop-blur border border-slate-800/40 rounded-full h-1.5 p-0.5 overflow-hidden flex items-center z-20">
+                <div id="inputLevelBar" class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-pink-500 rounded-full w-0 transition-all duration-75"></div>
+            </div>
+
             <!-- On-Screen Play/Instructions Overlay -->
             <div id="placeholderOverlay" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center z-20 transition-opacity duration-300 bg-slate-950/40">
-                <div class="p-3 sm:p-4 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-3 animate-pulse">
+                <div class="p-3 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mb-3 animate-pulse">
                     <i data-lucide="play" class="w-6 h-6"></i>
                 </div>
                 <h2 class="text-sm sm:text-base font-semibold text-slate-200">Start the Experience</h2>
                 <p class="text-[10px] sm:text-xs text-slate-400 max-w-xs mt-1">Tap a source below to stream audio</p>
             </div>
 
-            <!-- Guided Error & Troubleshooter Overlay -->
+            <!-- Error Popups -->
             <div id="errorOverlay" class="hidden absolute inset-0 bg-slate-950/95 z-30 flex flex-col items-center justify-center p-5 text-center overflow-y-auto">
                 <div class="p-3 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 mb-2">
                     <i data-lucide="shield-alert" class="w-6 h-6 animate-bounce"></i>
                 </div>
-                <h3 class="text-sm sm:text-base font-bold text-pink-400" id="errorTitle">Mic Access Blocked</h3>
+                <h3 class="text-sm sm:text-base font-bold text-pink-400" id="errorTitle">Notice</h3>
                 <div class="text-[11px] sm:text-xs text-slate-300 max-w-sm mt-2 mb-4 text-left bg-slate-900/90 p-3 rounded-lg border border-slate-800 space-y-1.5" id="errorDetailBlock"></div>
                 <button id="dismissError" class="px-4 py-1.5 rounded-md bg-slate-800 border border-slate-700 text-xs text-slate-200 hover:bg-slate-700 active:scale-95">Dismiss</button>
             </div>
         </div>
 
-        <!-- Controls Area -->
+        <!-- Controls Column -->
         <div class="lg:w-72 shrink-0 flex flex-col gap-2">
+            
             <!-- Audio Input Panel -->
             <div class="flex items-center gap-1.5 bg-slate-900/60 p-2 rounded-xl border border-slate-900/80">
                 <button id="toggleMicBtn" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md">
                     <i data-lucide="mic" id="micIcon" class="w-3.5 h-3.5"></i>
                     <span id="micBtnText">Use Microphone</span>
                 </button>
+
                 <div class="flex-1 relative">
                     <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
                     <button id="fileBtn" class="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95">
                         <i data-lucide="music" class="w-3.5 h-3.5"></i>
-                        <span id="fileBtnText">Load Audio File</span>
+                        <span id="fileBtnText">Load File</span>
                     </button>
                 </div>
+                
                 <button id="freezeBtn" disabled class="p-2.5 rounded-lg border border-slate-800 bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 transition" title="Freeze frame">
                     <i data-lucide="pause" id="freezeIcon" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <!-- Visualization Mode Selector -->
+            <!-- Visualization Presets -->
             <div class="grid grid-cols-4 gap-1">
                 <button data-mode="bars" class="mode-btn active py-2 rounded-lg border border-cyan-500/30 bg-slate-900/40 text-[10px] font-bold text-cyan-300 flex flex-col items-center justify-center gap-1 transition active:scale-95">
-                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Bars
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i><span>Bars</span>
                 </button>
                 <button data-mode="wave" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
-                    <i data-lucide="waves" class="w-4 h-4"></i> Wave
+                    <i data-lucide="waves" class="w-4 h-4"></i><span>Wave</span>
                 </button>
                 <button data-mode="radial" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
-                    <i data-lucide="disc" class="w-4 h-4"></i> Radial
+                    <i data-lucide="disc" class="w-4 h-4"></i><span>Radial</span>
                 </button>
                 <button data-mode="particles" class="mode-btn py-2 rounded-lg border border-slate-900 bg-slate-900/40 text-[10px] font-bold text-slate-400 flex flex-col items-center justify-center gap-1 transition active:scale-95">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i> Particles
+                    <i data-lucide="sparkles" class="w-4 h-4"></i><span>Particles</span>
                 </button>
             </div>
 
-            <!-- Expandable Settings Panel -->
+            <!-- Playing Track Overlay Indicator -->
+            <div id="playingTrackIndicator" class="hidden flex items-center justify-between p-2.5 bg-cyan-950/20 border border-cyan-500/20 rounded-xl text-xs">
+                <span class="flex items-center gap-1.5 text-cyan-400 truncate pr-4">
+                    <i data-lucide="disc" class="w-4 h-4 animate-spin"></i>
+                    <span id="currentTrackLabel" class="truncate font-medium">Track</span>
+                </span>
+                <span id="peakDbDisplay" class="font-mono text-[10px] text-slate-400 shrink-0">PEAK: -INF dB</span>
+            </div>
+
+            <!-- Settings Expanded Panel -->
             <div class="bg-slate-900/60 rounded-xl border border-slate-900/80 overflow-hidden">
                 <button id="settingsHeaderBtn" class="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">
-                    <span class="flex items-center gap-1.5"><i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i> Adjustments & Effects</span>
+                    <span class="flex items-center gap-1.5">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5 text-cyan-400"></i>Settings & Concert Sync
+                    </span>
                     <i data-lucide="chevron-down" id="settingsChevron" class="w-4 h-4 transition-transform duration-200"></i>
                 </button>
+
                 <div id="settingsExpandedPanel" class="max-h-0 opacity-0 transition-all duration-300 ease-in-out px-3 pb-3 space-y-3">
                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
-                        <div class="p-2 bg-cyan-950/20 border border-cyan-500/10 rounded-lg">
+                        <div class="p-2 bg-cyan-950/20 border border-cyan-500/20 rounded-lg">
                             <label class="flex items-center justify-between text-[11px] font-bold text-cyan-400 cursor-pointer">
-                                <span class="flex items-center gap-1"><i data-lucide="lightbulb" class="w-3.5 h-3.5 text-yellow-400"></i> Concert Light</span>
-                                <input type="checkbox" id="concertLightToggle" class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
+                                <span class="flex items-center gap-1"><i data-lucide="lightbulb" class="w-3.5 h-3.5 text-yellow-400"></i>Concert Light</span>
+                                <input type="checkbox" id="concertLightToggle" checked class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
                             </label>
                         </div>
-                         <div class="p-2 bg-slate-950/40 border border-slate-800 rounded-lg">
-                             <label class="flex items-center justify-between text-[11px] font-bold text-slate-400 cursor-pointer">
+                        <div class="p-2 bg-slate-950/40 border border-slate-800 rounded-lg">
+                            <label class="flex items-center justify-between text-[11px] font-bold text-slate-400 cursor-pointer">
                                 <span>Neon Glow</span>
                                 <input type="checkbox" id="glowToggle" checked class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
                             </label>
                         </div>
                     </div>
+
+                    <!-- Symmetric Bar Switch -->
+                    <div class="p-2 bg-slate-950/40 border border-slate-800 rounded-lg">
+                        <label class="flex items-center justify-between text-[11px] font-bold text-slate-400 cursor-pointer">
+                            <span class="flex items-center gap-1"><i data-lucide="split" class="w-3.5 h-3.5 text-cyan-400"></i>Symmetric Mirror (Bars)</span>
+                            <input type="checkbox" id="mirrorToggle" checked class="w-3.5 h-3.5 accent-cyan-400 rounded cursor-pointer">
+                        </label>
+                    </div>
+
+                    <!-- Themes -->
                     <div class="space-y-1">
                         <div class="flex justify-between text-[10px] text-slate-400">
                             <span>Color Scheme</span>
@@ -174,22 +212,26 @@
                             <button data-theme="monochrome" class="theme-btn border border-slate-700 h-6 rounded-lg bg-gradient-to-r from-slate-200 to-slate-500 shadow-sm" title="Monochrome"></button>
                         </div>
                     </div>
+
+                    <!-- Sliders -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                         <div class="space-y-0.5">
+                        <div class="space-y-0.5">
                             <div class="flex justify-between text-[10px] text-slate-400">
                                 <span>Sensitivity Gain</span>
                                 <span id="gainVal" class="text-cyan-400 font-mono">1.5x</span>
                             </div>
                             <input type="range" id="gainControl" min="0.5" max="4.0" step="0.1" value="1.5" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
                         </div>
+
                         <div class="space-y-0.5">
                             <div class="flex justify-between text-[10px] text-slate-400">
-                                <span>Signal Smoothing</span>
-                                <span id="smoothingVal" class="text-cyan-400 font-mono">0.85</span>
+                                <span>Beat Threshold</span>
+                                <span id="beatSensVal" class="text-cyan-400 font-mono">1.25x</span>
                             </div>
-                            <input type="range" id="smoothingControl" min="0.1" max="0.95" step="0.05" value="0.85" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                            <input type="range" id="beatSensControl" min="1.05" max="1.6" step="0.05" value="1.25" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -197,15 +239,26 @@
 
     <script>
         lucide.createIcons();
-        
-        const state = {
-            isListening: false, isFrozen: false, activeSource: null, mode: 'bars', theme: 'cyberpunk',
-            gain: 1.5, fftSize: 128, smoothing: 0.85, glow: true, concertLight: false, bgCycleHue: 0
+
+        // --- Global State & Configuration ---
+        const state = { 
+            isListening: false, 
+            isFrozen: false, 
+            activeSource: null, 
+            mode: 'bars', 
+            theme: 'cyberpunk', 
+            gain: 1.5, 
+            beatSens: 1.25, 
+            fftSize: 128, 
+            smoothing: 0.85, 
+            glow: true, 
+            concertLight: true, 
+            bgCycleHue: 0, 
+            mirror: true 
         };
 
         if (window.innerWidth < 640) {
             state.fftSize = 64; 
-            document.getElementById('fftSelect').value = "64";
         }
 
         const themes = {
@@ -216,30 +269,59 @@
         };
 
         let audioCtx, analyserNode, gainNode, micStream, micSourceNode, fileSourceNode, audioPlayNode, animationFrameId;
-        const bodyFrame = document.getElementById('bodyFrame');
-        const canvas = document.getElementById('visualizerCanvas');
-        const ctx = canvas.getContext('2d');
-        const canvasContainer = document.getElementById('canvasContainer');
-        const allUI = {
-            toggleMicBtn: document.getElementById('toggleMicBtn'), micIcon: document.getElementById('micIcon'), micBtnText: document.getElementById('micBtnText'),
-            audioFileInput: document.getElementById('audioFileInput'), fileBtn: document.getElementById('fileBtn'), fileBtnText: document.getElementById('fileBtnText'),
-            freezeBtn: document.getElementById('freezeBtn'), freezeIcon: document.getElementById('freezeIcon'), placeholderOverlay: document.getElementById('placeholderOverlay'),
-            errorOverlay: document.getElementById('errorOverlay'), errorTitle: document.getElementById('errorTitle'), errorDetailBlock: document.getElementById('errorDetailBlock'),
-            dismissError: document.getElementById('dismissError'), statusDot: document.getElementById('statusDot'), statusText: document.getElementById('statusText'),
-            peakDb: document.getElementById('peakDb'), gainControl: document.getElementById('gainControl'), gainVal: document.getElementById('gainVal'),
-            fftSelect: document.getElementById('fftSelect'), fftVal: document.getElementById('fftVal'), smoothingControl: document.getElementById('smoothingControl'),
-            smoothingVal: document.getElementById('smoothingVal'), glowToggle: document.getElementById('glowToggle'), concertLightToggle: document.getElementById('concertLightToggle'),
-            settingsHeaderBtn: document.getElementById('settingsHeaderBtn'), settingsChevron: document.getElementById('settingsChevron'), settingsExpandedPanel: document.getElementById('settingsExpandedPanel'),
-        };
         let particles = [], peakCaps = [];
 
+        // Dynamic Beat-Tracking State
+        let beatCutoff = 0;
+        let beatDecayRate = 0.96;
+        let strobePulse = 0;
+
+        // --- DOM Elements ---
+        const dom = {
+            bodyFrame: document.getElementById('bodyFrame'),
+            canvas: document.getElementById('visualizerCanvas'),
+            canvasContainer: document.getElementById('canvasContainer'),
+            toggleMicBtn: document.getElementById('toggleMicBtn'),
+            micIcon: document.getElementById('micIcon'),
+            micBtnText: document.getElementById('micBtnText'),
+            audioFileInput: document.getElementById('audioFileInput'),
+            fileBtn: document.getElementById('fileBtn'),
+            fileBtnText: document.getElementById('fileBtnText'),
+            freezeBtn: document.getElementById('freezeBtn'),
+            freezeIcon: document.getElementById('freezeIcon'),
+            placeholderOverlay: document.getElementById('placeholderOverlay'),
+            errorOverlay: document.getElementById('errorOverlay'),
+            errorTitle: document.getElementById('errorTitle'),
+            errorDetailBlock: document.getElementById('errorDetailBlock'),
+            dismissError: document.getElementById('dismissError'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            peakDbDisplay: document.getElementById('peakDbDisplay'),
+            inputLevelBar: document.getElementById('inputLevelBar'),
+            gainControl: document.getElementById('gainControl'),
+            gainVal: document.getElementById('gainVal'),
+            beatSensControl: document.getElementById('beatSensControl'),
+            beatSensVal: document.getElementById('beatSensVal'),
+            glowToggle: document.getElementById('glowToggle'),
+            mirrorToggle: document.getElementById('mirrorToggle'),
+            concertLightToggle: document.getElementById('concertLightToggle'),
+            settingsHeaderBtn: document.getElementById('settingsHeaderBtn'),
+            settingsChevron: document.getElementById('settingsChevron'),
+            settingsExpandedPanel: document.getElementById('settingsExpandedPanel'),
+            playingTrackIndicator: document.getElementById('playingTrackIndicator'),
+            currentTrackLabel: document.getElementById('currentTrackLabel'),
+            currentThemeName: document.getElementById('currentThemeName')
+        };
+        const ctx = dom.canvas.getContext('2d');
+
+        // --- Canvas Resize ---
         function resizeCanvas() {
-            const rect = canvasContainer.getBoundingClientRect();
-            const pixelRatio = Math.min(window.devicePixelRatio, 2);
-            canvas.width = rect.width * pixelRatio;
-            canvas.height = rect.height * pixelRatio;
+            const rect = dom.canvasContainer.getBoundingClientRect();
+            const r = Math.min(window.devicePixelRatio, 2);
+            dom.canvas.width = rect.width * r;
+            dom.canvas.height = rect.height * r;
             ctx.resetTransform();
-            ctx.scale(pixelRatio, pixelRatio);
+            ctx.scale(r, r);
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -255,132 +337,447 @@
                 gainNode.connect(analyserNode);
             }
         }
+        
         async function startMicrophone() {
             initAudioEngine();
             disconnectFileSource();
-            if (!window.isSecureContext) { return showDiagnosticError("Insecure Context", `Mic access requires a secure (https:// or localhost) connection.`); }
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { return showDiagnosticError("Browser Not Supported", `Your browser doesn't support the required audio APIs.`); }
+            if (!window.isSecureContext) {
+                return showDiagnosticError("Insecure Context", `Mic access requires a secure (https:// or localhost) connection.`);
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return showDiagnosticError("Browser Not Supported", `Your browser doesn't support the required audio APIs.`);
+            }
             try {
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
-                try { micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
-                catch (e) { console.warn("Optimal mic constraints failed, retrying with basic.", e); micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                } catch (e) {
+                    console.warn("Optimal mic constraints failed, retrying.", e);
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
                 micSourceNode = audioCtx.createMediaStreamSource(micStream);
                 micSourceNode.connect(gainNode);
-                state.isListening = true; state.activeSource = 'mic';
+                state.isListening = true;
+                state.activeSource = 'mic';
                 updateSourceUI();
-                allUI.placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
-                allUI.errorOverlay.classList.add('hidden');
-                allUI.freezeBtn.disabled = false;
-                resizeCanvas(); draw();
+                dom.placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
+                dom.errorOverlay.classList.add('hidden');
+                dom.freezeBtn.disabled = false;
+                resizeCanvas();
+                draw();
             } catch (err) {
                 console.error("Mic Error:", err);
-                let detail = `Error: ${err.message || err.name}`;
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') detail = `<b>OS or Browser has blocked access.</b> Please go to your device/browser privacy settings and grant microphone permission.`;
-                if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') detail = "No microphone hardware was detected on your device.";
-                if (err.name === 'NotReadableError' || err.name === 'TrackStartError') detail = "Your microphone is currently in use by another app (e.g., Zoom, another browser tab).";
-                showDiagnosticError("Mic Access Blocked", detail);
+                let d = `Error: ${err.message || err.name}`;
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    d = `<b>OS or Browser blocked access.</b> Please go to settings and grant microphone permission.`;
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    d = "No microphone hardware detected.";
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    d = "Your mic is in use by another app.";
+                }
+                showDiagnosticError("Mic Access Blocked", d);
                 stopAllAudio();
             }
         }
-        function showDiagnosticError(title, htmlContent) { allUI.errorTitle.textContent = title; allUI.errorDetailBlock.innerHTML = htmlContent; allUI.errorOverlay.classList.remove('hidden'); }
+
+        function showDiagnosticError(title, html) {
+            dom.errorTitle.textContent = title;
+            dom.errorDetailBlock.innerHTML = html;
+            dom.errorOverlay.classList.remove('hidden');
+        }
+
         function disconnectFileSource() {
             if (audioPlayNode) { try { audioPlayNode.stop(); } catch(e) {} audioPlayNode = null; }
             if (fileSourceNode) { fileSourceNode.disconnect(); fileSourceNode = null; }
-            allUI.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
-            allUI.fileBtnText.textContent = "Load Audio File";
+            dom.playingTrackIndicator.classList.add('hidden');
+            dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95";
+            dom.fileBtnText.textContent = "Load File";
         }
+
         function disconnectMicSource() {
-            if (micStream) { micStream.getTracks().forEach(track => track.stop()); micStream = null; }
+            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
             if (micSourceNode) { micSourceNode.disconnect(); micSourceNode = null; }
-            allUI.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md";
-            allUI.micBtnText.textContent = "Use Microphone";
+            dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 active:scale-95 shadow-md";
+            dom.micBtnText.textContent = "Use Mic";
         }
+
         function stopAllAudio() {
-            disconnectMicSource(); disconnectFileSource();
-            state.isListening = false; state.isFrozen = false; state.activeSource = null;
+            disconnectMicSource();
+            disconnectFileSource();
+            state.isListening = false;
+            state.isFrozen = false;
+            state.activeSource = null;
             updateSourceUI();
-            allUI.placeholderOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            allUI.freezeBtn.disabled = true;
-            bodyFrame.style.backgroundColor = '';
+            dom.placeholderOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            dom.freezeBtn.disabled = true;
+            dom.bodyFrame.style.backgroundColor = '';
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             clearCanvas();
         }
-        allUI.audioFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            initAudioEngine(); disconnectMicSource(); disconnectFileSource();
+
+        dom.audioFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            initAudioEngine();
+            disconnectMicSource();
+            disconnectFileSource();
             const reader = new FileReader();
-            reader.onload = async (event) => {
+            reader.onload = async event => {
                 try {
-                    allUI.statusText.textContent = "Decoding...";
+                    dom.statusText.textContent = "Decoding...";
                     const buffer = await audioCtx.decodeAudioData(event.target.result);
-                    audioPlayNode = audioCtx.createBufferSource(); audioPlayNode.buffer = buffer;
-                    audioPlayNode.connect(gainNode); audioPlayNode.connect(audioCtx.destination);
+                    audioPlayNode = audioCtx.createBufferSource();
+                    audioPlayNode.buffer = buffer;
+                    audioPlayNode.connect(gainNode);
+                    audioPlayNode.connect(audioCtx.destination);
                     audioPlayNode.onended = stopAllAudio;
                     audioPlayNode.start(0);
-                    state.isListening = true; state.activeSource = 'file';
+                    state.isListening = true;
+                    state.activeSource = 'file';
+                    dom.currentTrackLabel.textContent = file.name;
+                    dom.playingTrackIndicator.classList.remove('hidden');
                     updateSourceUI();
-                    allUI.placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
-                    allUI.errorOverlay.classList.add('hidden'); allUI.freezeBtn.disabled = false;
-                    resizeCanvas(); draw();
-                } catch (err) { showDiagnosticError("Decoding Error", "Could not decode audio. Try an MP3 or WAV file."); stopAllAudio(); }
+                    dom.placeholderOverlay.classList.add('opacity-0', 'pointer-events-none');
+                    dom.errorOverlay.classList.add('hidden');
+                    dom.freezeBtn.disabled = false;
+                    resizeCanvas();
+                    draw();
+                } catch (err) {
+                    showDiagnosticError("Decoding Error", "Could not decode audio. Try MP3 or WAV.");
+                    stopAllAudio();
+                }
             };
             reader.readAsArrayBuffer(file);
         });
-        function updateSourceUI() { /* UI update logic based on state.activeSource */ } // Simplified for brevity
-        allUI.dismissError.addEventListener('click', () => allUI.errorOverlay.classList.add('hidden'));
-        function clearCanvas() { const w = canvas.width / devicePixelRatio; const h = canvas.height / devicePixelRatio; ctx.clearRect(0, 0, w, h); }
+        
+        function updateSourceUI() {
+            if (state.activeSource === 'mic') {
+                dom.toggleMicBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95 shadow-md";
+                dom.micBtnText.textContent = "Stop Mic";
+                dom.statusDot.className = "w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping";
+                dom.statusText.textContent = "Listening Live";
+                dom.statusText.className = "text-cyan-400";
+            } else if (state.activeSource === 'file') {
+                dom.fileBtn.className = "w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg font-bold text-xs transition-all bg-gradient-to-r from-pink-500 to-rose-600 text-white active:scale-95";
+                dom.fileBtnText.textContent = "Stop Track";
+                dom.statusDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
+                dom.statusText.textContent = "Playing File";
+                dom.statusText.className = "text-emerald-400";
+            } else {
+                dom.statusDot.className = "w-1.5 h-1.5 rounded-full bg-slate-500";
+                dom.statusText.textContent = "System Idle";
+                dom.statusText.className = "text-slate-400";
+            }
+            lucide.createIcons();
+        }
 
+        function clearCanvas() {
+            const w = dom.canvas.width / window.devicePixelRatio;
+            const h = dom.canvas.height / window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+        }
+
+        // --- Main Rendering & Concert Lighting Engine ---
         function draw() {
             if (!state.isListening) return;
             animationFrameId = requestAnimationFrame(draw);
             if (state.isFrozen) return;
 
-            const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
+            const w = dom.canvas.width / window.devicePixelRatio;
+            const h = dom.canvas.height / window.devicePixelRatio;
             const bufferLength = analyserNode.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+            const freqData = new Uint8Array(bufferLength);
+            const timeData = new Uint8Array(bufferLength);
             
-            if (state.mode === 'wave') analyserNode.getByteTimeDomainData(dataArray);
-            else analyserNode.getByteFrequencyData(dataArray);
-            
-            let bassSum = 0;
-            for (let i = 0; i < Math.min(4, bufferLength); i++) bassSum += dataArray[i];
-            const bassIntensity = (bassSum / Math.min(4, bufferLength)) / 255;
+            analyserNode.getByteFrequencyData(freqData);
+            analyserNode.getByteTimeDomainData(timeData);
 
-            state.bgCycleHue = (state.bgCycleHue + 0.2) % 360;
-            const gradBg = ctx.createRadialGradient(w / 2, h / 2, 5, w / 2, h / 2, Math.max(w, h) * (0.4 + bassIntensity * 0.3));
+            // 1. Calculate Room Loudness (RMS Intensity)
+            let sumSquares = 0;
+            let peakSample = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const normTime = (timeData[i] - 128) / 128;
+                sumSquares += normTime * normTime;
+                if (freqData[i] > peakSample) peakSample = freqData[i];
+            }
+            const rms = Math.sqrt(sumSquares / bufferLength); // Range 0.0 - 1.0 (True loudness)
+            const roomLoudness = Math.min(1.0, rms * 3.5); // Amplified for UI presence
+            
+            dom.inputLevelBar.style.width = `${Math.min(100, Math.round(roomLoudness * 100))}%`;
+            const db = peakSample > 0 ? Math.round(20 * Math.log10(peakSample / 255)) : -Infinity;
+            dom.peakDbDisplay.textContent = `PEAK: ${db === -Infinity ? '-INF dB' : db + ' dB'}`;
+
+            // 2. Music-Synced Beat-Drop & Onset Detection (Bass Kick Focus)
+            let bassSum = 0;
+            const bassBins = Math.max(2, Math.floor(bufferLength * 0.08)); // Sub-bass and kicks
+            for (let i = 0; i < bassBins; i++) {
+                bassSum += freqData[i];
+            }
+            const currentBass = (bassSum / bassBins) / 255;
+
+            // Trigger beat pulse when bass crosses dynamic threshold
+            if (currentBass > beatCutoff && currentBass > 0.2) {
+                strobePulse = 1.0; // Instant flash
+                beatCutoff = currentBass * state.beatSens; // Reset threshold peak
+            } else {
+                beatCutoff *= beatDecayRate; // Gradually fall down to catch next beat
+                strobePulse = Math.max(0, strobePulse - 0.06); // Decay strobe flash
+            }
+
+            // 3. Dynamic Hue & Light Sync
+            state.bgCycleHue = (state.bgCycleHue + 0.3 + (roomLoudness * 0.8)) % 360;
             let hue = state.bgCycleHue;
-            if(state.theme === 'neon') hue = 140 + (bassIntensity * 30);
-            if(state.theme === 'sunset') hue = 10 + (bassIntensity * 40);
-            const color1 = `hsla(${hue}, 80%, ${8 + (bassIntensity * 12)}%, 0.8)`;
-            const color2 = `hsla(${hue + 20}, 90%, 2%, 1)`;
-            gradBg.addColorStop(0, color1);
-            gradBg.addColorStop(1, color2);
+            if (state.theme === 'neon') hue = 140 + (currentBass * 30);
+            if (state.theme === 'sunset') hue = 10 + (currentBass * 45);
+
+            // Radial canvas backdrop: Expands & brightens with room loudness and beats
+            const gradRadius = Math.max(w, h) * (0.35 + (roomLoudness * 0.45) + (strobePulse * 0.2));
+            const gradBg = ctx.createRadialGradient(w / 2, h / 2, 5, w / 2, h / 2, gradRadius);
+            
+            const lightLuminance = 6 + (roomLoudness * 22) + (strobePulse * 28);
+            const colorInner = `hsla(${hue}, 85%, ${Math.min(75, lightLuminance)}%, ${0.35 + roomLoudness * 0.5})`;
+            const colorOuter = `hsla(${hue + 15}, 90%, 2%, 1)`;
+
+            gradBg.addColorStop(0, colorInner);
+            gradBg.addColorStop(1, colorOuter);
             ctx.fillStyle = gradBg;
             ctx.fillRect(0, 0, w, h);
 
+            // 4. Device Screen Concert Ambient Glow
             if (state.concertLight) {
-                if (bassIntensity > 0.4) bodyFrame.style.backgroundColor = `hsla(${hue}, 80%, ${30 + (bassIntensity * 20)}%, ${0.1 + bassIntensity * 0.3})`;
-                else bodyFrame.style.backgroundColor = '#030206';
-            } else bodyFrame.style.backgroundColor = '#030206';
+                // Room volume sets baseline glow, while beats trigger strobe flashes
+                const ambientAlpha = 0.05 + (roomLoudness * 0.28) + (strobePulse * 0.45);
+                const ambientLightness = 20 + (strobePulse * 35);
+                dom.bodyFrame.style.backgroundColor = `hsla(${hue}, 85%, ${ambientLightness}%, ${Math.min(0.85, ambientAlpha)})`;
+            } else {
+                dom.bodyFrame.style.backgroundColor = '#030206';
+            }
 
+            // 5. Render Visualizer Modes
+            const displayData = (state.mode === 'wave') ? timeData : freqData;
             switch (state.mode) {
-                case 'bars': renderBars(dataArray, bufferLength, w, h); break;
-                case 'wave': renderWaveform(dataArray, bufferLength, w, h); break;
-                case 'radial': renderRadial(dataArray, bufferLength, w, h); break;
-                case 'particles': renderParticles(dataArray, bufferLength, w, h, bassIntensity); break;
+                case 'bars': renderBars(displayData, bufferLength, w, h, strobePulse); break;
+                case 'wave': renderWaveform(displayData, bufferLength, w, h, strobePulse); break;
+                case 'radial': renderRadial(displayData, bufferLength, w, h, strobePulse); break;
+                case 'particles': renderParticles(displayData, bufferLength, w, h, roomLoudness + strobePulse); break;
             }
         }
-        function renderBars(dataArray, bufferLength, w, h) { /* Rendering logic remains the same */ }
-        function renderWaveform(dataArray, bufferLength, w, h) { /* Rendering logic remains the same */ }
-        function renderRadial(dataArray, bufferLength, w, h) { /* Rendering logic remains the same */ }
-        function renderParticles(dataArray, bufferLength, w, h, bassIntensity) { /* Updated to use bassIntensity */ }
 
-        // Event Listeners for controls... (abbreviated)
-        allUI.toggleMicBtn.addEventListener('click', () => { if (state.activeSource === 'mic') stopAllAudio(); else startMicrophone(); });
-        allUI.fileBtn.addEventListener('click', () => { if (state.activeSource === 'file') stopAllAudio(); else allUI.audioFileInput.click(); });
-        allUI.freezeBtn.addEventListener('click', () => { /* Freeze logic */ });
-        allUI.settingsHeaderBtn.addEventListener('click', () => { /* Toggle settings panel */ });
-        // ... other listeners
+        // --- Visualizer Render Routines ---
+        function renderBars(a, b, w, h, beatBoost) {
+            const t = themes[state.theme];
+            const m = state.mirror;
+            const c = Math.floor(b * 0.75);
+            const i = m ? Math.floor(c / 2) : c;
+            const g = window.innerWidth < 640 ? 1.5 : 3;
+            const d = Math.max(1.5, (w / i) - g);
+            
+            ctx.shadowBlur = state.glow ? (12 + beatBoost * 14) : 0;
+            ctx.shadowColor = t.primary;
+            
+            if (peakCaps.length !== i) {
+                peakCaps = Array(i).fill(0).map(() => ({ val: 0, velocity: 0 }));
+            }
+            
+            for (let n = 0; n < i; n++) {
+                const v = a[n];
+                const H = (v / 255) * (h * (0.65 + beatBoost * 0.15));
+                ctx.fillStyle = t.getGradient(ctx, h);
+                const p = peakCaps[n];
+                
+                if (H > p.val) {
+                    p.val = H;
+                    p.velocity = 0.6;
+                } else {
+                    p.velocity += 0.24;
+                    p.val = Math.max(0, p.val - p.velocity);
+                }
+                
+                if (m) {
+                    const xL = (w / 2) - (n * (d + g)) - d;
+                    const xR = (w / 2) + (n * (d + g));
+                    const y = h - H - 15;
+                    ctx.fillRect(xL, y, d, H);
+                    ctx.fillRect(xR, y, d, H);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(xL, h - p.val - 18, d, 2);
+                    ctx.fillRect(xR, h - p.val - 18, d, 2);
+                } else {
+                    const x = n * (d + g);
+                    const y = h - H - 15;
+                    ctx.fillRect(x, y, d, H);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(x, h - p.val - 18, d, 2);
+                }
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        function renderWaveform(a, b, w, h, beatBoost) {
+            const t = themes[state.theme];
+            ctx.lineWidth = 3 + (beatBoost * 2);
+            ctx.strokeStyle = t.primary;
+            ctx.shadowBlur = state.glow ? (14 + beatBoost * 16) : 0;
+            ctx.shadowColor = t.primary;
+            ctx.beginPath();
+            const s = w / b;
+            let x = 0;
+            for (let i = 0; i < b; i++) {
+                const v = a[i] / 128;
+                const y = (v * h) / 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += s;
+            }
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        function renderRadial(a, b, w, h, beatBoost) {
+            const t = themes[state.theme];
+            const x = w / 2;
+            const y = h / 2;
+            const baseRadius = Math.min(w, h) * (window.innerWidth < 640 ? 0.18 : 0.22) * (1 + beatBoost * 0.12);
+            ctx.shadowBlur = state.glow ? (12 + beatBoost * 14) : 0;
+            ctx.shadowColor = t.primary;
+            const c = Math.floor(b * (window.innerWidth < 640 ? 0.5 : 0.65));
+            const s = (Math.PI * 2) / c;
+            for (let i = 0; i < c; i++) {
+                const A = a[i] / 255;
+                const L = A * (Math.min(w, h) * 0.26);
+                const g = i * s;
+                const x1 = x + Math.cos(g) * baseRadius;
+                const y1 = y + Math.sin(g) * baseRadius;
+                const x2 = x + Math.cos(g) * (baseRadius + L);
+                const y2 = y + Math.sin(g) * (baseRadius + L);
+                ctx.strokeStyle = t.getGradient(ctx, h);
+                ctx.lineWidth = window.innerWidth < 640 ? 2.5 : 3.5;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            const vA = a.reduce((p, k) => p + k, 0) / b / 255;
+            ctx.beginPath();
+            ctx.arc(x, y, baseRadius * 0.85 + vA * 15, 0, Math.PI * 2);
+            ctx.fillStyle = t.primary;
+            ctx.globalAlpha = 0.25 + vA * 0.45;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+        }
+
+        function renderParticles(a, b, w, h, intensity) {
+            const t = themes[state.theme];
+            const vA = a.reduce((p, k) => p + k, 0) / b / 255;
+            const M = window.innerWidth < 640;
+            const mP = M ? 80 : 220;
+            const mS = M ? 3 : 7;
+            if (vA > 0.08 && particles.length < mP) {
+                const sC = Math.min(mS, Math.ceil(vA * 9));
+                for (let i = 0; i < sC; i++) {
+                    const g = Math.random() * Math.PI * 2;
+                    const s = (Math.random() * 3 + 1) * (1 + intensity * 2);
+                    particles.push({ 
+                        x: w / 2, 
+                        y: h / 2, 
+                        vx: Math.cos(g) * s, 
+                        vy: Math.sin(g) * s - (vA * 0.3), 
+                        radius: Math.random() * (M ? 2.5 : 3.5) + 1, 
+                        alpha: 1, 
+                        color: Math.random() > 0.45 ? t.primary : t.secondary 
+                    });
+                }
+            }
+            ctx.shadowBlur = state.glow ? 10 : 0;
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= M ? 0.02 : 0.012;
+                if (p.alpha <= 0 || p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+        }
+
+        // --- Event Listeners ---
+        dom.toggleMicBtn.addEventListener('click', () => { state.activeSource === 'mic' ? stopAllAudio() : startMicrophone(); });
+        dom.fileBtn.addEventListener('click', () => { state.activeSource === 'file' ? stopAllAudio() : dom.audioFileInput.click(); });
+        
+        dom.freezeBtn.addEventListener('click', () => {
+            state.isFrozen = !state.isFrozen;
+            dom.freezeBtn.classList.toggle('bg-cyan-500/20', state.isFrozen);
+            dom.freezeBtn.classList.toggle('border-cyan-500', state.isFrozen);
+            dom.freezeBtn.classList.toggle('text-cyan-400', state.isFrozen);
+            dom.freezeIcon.setAttribute('data-lucide', state.isFrozen ? 'play' : 'pause');
+            lucide.createIcons();
+        });
+        
+        dom.dismissError.addEventListener('click', () => dom.errorOverlay.classList.add('hidden'));
+        
+        dom.settingsHeaderBtn.addEventListener('click', () => {
+            const o = dom.settingsExpandedPanel.style.maxHeight && dom.settingsExpandedPanel.style.maxHeight !== '0px';
+            dom.settingsExpandedPanel.style.maxHeight = o ? '0px' : '500px';
+            dom.settingsExpandedPanel.style.opacity = o ? '0' : '1';
+            dom.settingsChevron.style.transform = o ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+        
+        document.querySelectorAll('.mode-btn').forEach(b => {
+            b.addEventListener('click', e => {
+                document.querySelectorAll('.mode-btn').forEach(B => {
+                    B.classList.remove('active', 'border-cyan-500/30', 'bg-slate-900/40', 'text-cyan-300');
+                    B.classList.add('border-slate-900', 'text-slate-400');
+                });
+                const t = e.currentTarget;
+                t.classList.add('active', 'border-cyan-500/30', 'bg-slate-900/40', 'text-cyan-300');
+                t.classList.remove('border-slate-900', 'text-slate-400');
+                state.mode = t.getAttribute('data-mode');
+            });
+        });
+        
+        document.querySelectorAll('.theme-btn').forEach(b => {
+            b.addEventListener('click', e => {
+                const t = e.currentTarget.getAttribute('data-theme');
+                state.theme = t;
+                document.querySelectorAll('.theme-btn').forEach(B => {
+                    B.classList.remove('active', 'border-2', 'border-cyan-400');
+                    B.classList.add('border', 'border-slate-700');
+                });
+                e.currentTarget.classList.add('active', 'border-2', 'border-cyan-400');
+                e.currentTarget.classList.remove('border', 'border-slate-700');
+                dom.currentThemeName.textContent = themes[t].name;
+            });
+        });
+        
+        dom.gainControl.addEventListener('input', e => {
+            state.gain = parseFloat(e.target.value);
+            dom.gainVal.textContent = `${state.gain.toFixed(1)}x`;
+            if (gainNode) gainNode.gain.value = state.gain;
+        });
+
+        dom.beatSensControl.addEventListener('input', e => {
+            state.beatSens = parseFloat(e.target.value);
+            dom.beatSensVal.textContent = `${state.beatSens.toFixed(2)}x`;
+        });
+        
+        dom.glowToggle.addEventListener('change', e => state.glow = e.target.checked);
+        dom.mirrorToggle.addEventListener('change', e => state.mirror = e.target.checked);
+        
+        dom.concertLightToggle.addEventListener('change', e => {
+            state.concertLight = e.target.checked;
+            if (!state.concertLight) dom.bodyFrame.style.backgroundColor = '';
+        });
     </script>
 </body>
 </html>
