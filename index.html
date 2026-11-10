@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Φ // PURE 2D GOLDEN SPIRAL DSP</title>
+  <title>Φ // GOLDEN SPIRAL DSP v3.5 [INDIVIDUAL THEME BACKGROUNDS]</title>
   <style>
     :root {
       --bg: #050507;
-      --panel: rgba(11, 11, 16, 0.76);
-      --border: rgba(230, 198, 98, 0.22);
+      --panel: rgba(11, 11, 16, 0.94);
+      --border: rgba(230, 198, 98, 0.26);
       --gold: #ecc964;
-      --cyan: #5ce1e6;
-      --crimson: #ff4d6d;
       --text: #f2f2f5;
-      --muted: #72727e;
+      --muted: #7a7a88;
       --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
     }
 
@@ -22,6 +20,7 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-user-drag: none;
     }
 
     body, html {
@@ -39,15 +38,16 @@
       width: 100%;
       height: 100%;
       display: block;
+      z-index: 1;
     }
 
-    /* Subtle CRT / Vignette Overlay */
-    .vignette {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at center, transparent 45%, rgba(2, 2, 4, 0.85) 100%);
-      z-index: 2;
+    .hud-layer {
+      transition: opacity 0.3s ease;
+    }
+
+    body.hide-hud .hud-layer {
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
 
     /* Top HUD */
@@ -70,8 +70,7 @@
       background: var(--panel);
       padding: 12px 16px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      backdrop-filter: blur(12px);
+      border-radius: 8px;
     }
 
     .brand-title {
@@ -90,12 +89,11 @@
       height: 7px;
       border-radius: 50%;
       background: var(--muted);
-      transition: all 0.25s ease;
     }
 
     .status-dot.active {
       background: var(--gold);
-      box-shadow: 0 0 12px var(--gold), 0 0 24px var(--gold);
+      box-shadow: 0 0 10px var(--gold);
     }
 
     .brand-sub {
@@ -114,8 +112,8 @@
       font-size: 8px;
       padding: 2px 6px;
       border-radius: 3px;
-      background: rgba(236, 201, 100, 0.12);
-      border: 1px solid rgba(236, 201, 100, 0.3);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
       color: var(--gold);
       letter-spacing: 0.12em;
     }
@@ -132,8 +130,7 @@
       background: var(--panel);
       padding: 12px 16px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      backdrop-filter: blur(12px);
+      border-radius: 8px;
       text-align: right;
     }
 
@@ -148,107 +145,233 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Bottom Control Dock */
-    .hud-bottom {
+    /* Symmetrical Left & Right Side Docks */
+    .side-dock {
       position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 212px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 10px;
       background: var(--panel);
       border: 1px solid var(--border);
-      padding: 8px 14px;
-      border-radius: 8px;
-      backdrop-filter: blur(16px);
-      z-index: 10;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      padding: 14px;
+      border-radius: 10px;
+      z-index: 20;
+      pointer-events: auto;
     }
 
-    button, .file-label {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: 0.13em;
+    .side-dock.left { left: 28px; }
+    .side-dock.right { right: 28px; }
+
+    .dock-header {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--gold);
       text-transform: uppercase;
-      padding: 7px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    button:hover, .file-label:hover {
-      border-color: var(--gold);
-      color: var(--gold);
-      background: rgba(236, 201, 100, 0.08);
-    }
-
-    button.active {
-      background: rgba(236, 201, 100, 0.18);
-      border-color: var(--gold);
-      color: var(--gold);
-      box-shadow: 0 0 15px rgba(236, 201, 100, 0.18);
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .divider {
-      width: 1px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .control-group {
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 7px;
+    }
+
+    .dock-header span.sub {
+      font-size: 8px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      position: relative;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
       font-size: 9px;
       color: var(--muted);
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
+    }
+
+    .control-label .val {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
     }
 
     input[type="range"] {
       -webkit-appearance: none;
       appearance: none;
-      width: 68px;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.16);
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 2px;
       outline: none;
-      transition: opacity 0.2s;
+      cursor: pointer;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: var(--gold);
       cursor: pointer;
-      box-shadow: 0 0 8px var(--gold);
+    }
+
+    /* Custom In-DOM Dropdown */
+    .custom-dropdown {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-trigger {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.18s ease, color 0.18s ease;
+    }
+
+    .dropdown-trigger:hover, .custom-dropdown.open .dropdown-trigger {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .dropdown-arrow {
+      font-size: 8px;
+      color: var(--gold);
+      transition: transform 0.2s ease;
+    }
+
+    .custom-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #0b0b12;
+      border: 1px solid var(--gold);
+      border-radius: 6px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.92);
+    }
+
+    .custom-dropdown.open .dropdown-menu {
+      display: flex;
+    }
+
+    .dropdown-item {
+      padding: 8px 10px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover, .dropdown-item.selected {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--gold);
+    }
+
+    .swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    button, .file-label {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      display: block;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+
+    button:hover, .file-label:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    button.active {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    input[type="file"] { display: none; }
+
+    .h-divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 2px 0;
+    }
+
+    @media (max-width: 768px) {
+      .side-dock { width: 162px; padding: 10px; }
+      .side-dock.left { left: 12px; }
+      .side-dock.right { right: 12px; }
     }
   </style>
 </head>
 <body>
 
   <canvas id="canvas"></canvas>
-  <div class="vignette"></div>
 
-  <div class="hud-top">
+  <!-- TOP HUD: BRAND & TELEMETRY -->
+  <div class="hud-top hud-layer">
     <div class="brand">
       <div class="brand-title">
-        <div class="status-dot" id="statusDot"></div>
-        <span>Φ // PHYLLOTAXIS ENGINE v2.6</span>
+        <div class="status-dot active" id="statusDot"></div>
+        <span>Φ // golden ratio</span>
       </div>
-      <div class="brand-sub">2D GOLDEN SPIRAL + MINIMALIST SPECTRAL TOPOLOGY</div>
+      <div class="brand-sub" id="brandSubText">THEME BG: CELESTIAL ASTROLABE</div>
       <div class="badge-row">
-        <span class="badge" id="badgeAuto">AGC AUTO-TUNE: ON</span>
-        <span class="badge" id="badgeBeat">TRANSIENT: IDLE</span>
+        <span class="badge" id="badgeSource">SOURCE: DEVICE AUDIO SYNC</span>
+        <span class="badge" id="badgeBeat">TRANSIENT: SYNC</span>
       </div>
     </div>
 
@@ -261,98 +384,243 @@
     </div>
   </div>
 
-  <div class="hud-bottom">
-    <button id="btnSynth" title="Polyphonic Golden Ratio Harmonic Drone & Polyrhythm">Φ Synth v2</button>
-    <button id="btnMic" title="Live Microphone Input">Mic In</button>
-    <label class="file-label" title="Load Local Audio Track">
-      Audio File
-      <input type="file" id="audioFile" accept="audio/*" />
-    </label>
+  <!-- MIDDLE-LEFT DOCK: GEOMETRY & CUSTOM IN-DOM DROPDOWNS -->
+  <div class="side-dock left hud-layer">
+    <div class="dock-header">
+      <span>Geometry</span>
+      <span class="sub">Φ-MATH</span>
+    </div>
 
-    <div class="divider"></div>
-
-    <button id="btnAuto" class="active" title="Automatically optimize node density and tension">Auto-Tune: ON</button>
-    <button id="btnTheme" title="Switch Harmonic Color Palette">Theme: Aurum</button>
-
-    <div class="divider"></div>
-
-    <div class="control-group">
-      <span>NODES</span>
+    <div class="control-item">
+      <div class="control-label">
+        <span>NODES [F_n]</span>
+        <span class="val" id="lblNodes">480</span>
+      </div>
       <input type="range" id="nodeSlider" min="233" max="780" value="480" />
     </div>
 
-    <div class="control-group">
-      <span>TENSION</span>
+    <div class="control-item">
+      <div class="control-label">
+        <span>TENSION</span>
+        <span class="val" id="lblTension">62%</span>
+      </div>
       <input type="range" id="tensionSlider" min="10" max="100" value="62" />
     </div>
+
+    <div class="control-item">
+      <div class="control-label">
+        <span>ORBIT SPEED</span>
+        <span class="val" id="lblSpeed">100%</span>
+      </div>
+      <input type="range" id="speedSlider" min="10" max="200" value="100" />
+    </div>
+
+    <div class="control-item">
+      <div class="control-label">
+        <span>TRAIL PERSIST</span>
+        <span class="val" id="lblTrail">74%</span>
+      </div>
+      <input type="range" id="trailSlider" min="50" max="92" value="74" />
+    </div>
+
+    <div class="h-divider"></div>
+
+    <!-- Custom DOM Theme Dropdown -->
+    <div class="control-item">
+      <div class="control-label"><span>COLOR THEME</span></div>
+      <div class="custom-dropdown" id="themeDropdown">
+        <div class="dropdown-trigger" id="themeTrigger">
+          <span id="themeLabel">Aurum (Gold)</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+        <div class="dropdown-menu" id="themeMenu">
+          <div class="dropdown-item selected" data-val="0"><span class="swatch" style="background:#ecc964"></span>Aurum (Gold)</div>
+          <div class="dropdown-item" data-val="1"><span class="swatch" style="background:#5ce1e6"></span>Aether (Cyan)</div>
+          <div class="dropdown-item" data-val="2"><span class="swatch" style="background:#ff4d6d"></span>Solaris (Crimson)</div>
+          <div class="dropdown-item" data-val="3"><span class="swatch" style="background:#50eb9b"></span>Emerald (Jade)</div>
+          <div class="dropdown-item" data-val="4"><span class="swatch" style="background:#d76eff"></span>Orchid (Violet)</div>
+          <div class="dropdown-item" data-val="5"><span class="swatch" style="background:#ff9ebb"></span>Sakura (Blossom)</div>
+          <div class="dropdown-item" data-val="6"><span class="swatch" style="background:#3a86ff"></span>Abyssal (Ocean)</div>
+          <div class="dropdown-item" data-val="7"><span class="swatch" style="background:#dcdee6"></span>Monochrome (Silver)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom DOM Background Dropdown (Includes Theme Background!) -->
+    <div class="control-item">
+      <div class="control-label"><span>BACKGROUND</span></div>
+      <div class="custom-dropdown" id="bgDropdown">
+        <div class="dropdown-trigger" id="bgTrigger">
+          <span id="bgLabel">Theme Background</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+        <div class="dropdown-menu" id="bgMenu">
+          <div class="dropdown-item selected" data-val="0">Theme Background</div>
+          <div class="dropdown-item" data-val="1">Sacred Cosmos</div>
+          <div class="dropdown-item" data-val="2">Deep Void</div>
+        </div>
+      </div>
+    </div>
+
+    <button id="btnWeb" class="active" title="Toggle Audio-Gated Connecting Lines">Mesh Web: ON</button>
+  </div>
+
+  <!-- MIDDLE-RIGHT DOCK: AUDIO & DSP CONTROLS -->
+  <div class="side-dock right hud-layer">
+    <div class="dock-header">
+      <span>Audio Sync</span>
+      <span class="sub">SOURCE</span>
+    </div>
+
+    <button id="btnSysAudio" class="active" title="Sync to Device System Audio when Mic is OFF">Sys Audio: AUTO</button>
+    <button id="btnMic" title="Override System Audio with Live Microphone">Mic In: OFF</button>
+    <button id="btnSynth" title="Polyphonic Golden Ratio Harmonic Drone">Φ Synth: OFF</button>
+    <label class="file-label" title="Load Local Audio File">
+      Load Audio File
+      <input type="file" id="audioFile" accept="audio/*" />
+    </label>
+
+    <div class="h-divider"></div>
+
+    <div class="dock-header">
+      <span>Processor</span>
+      <span class="sub">AGC</span>
+    </div>
+
+    <button id="btnAuto" class="active" title="Automatically optimize node density and tension">Auto-Tune: ON</button>
+    <button id="btnSparks" class="active" title="Toggle High-Frequency Escape Sparks">Beat Sparks: ON</button>
   </div>
 
   <script>
     (() => {
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
+      const safeStorage = {
+        get(key, fallback) {
+          try {
+            const v = window.localStorage.getItem(key);
+            return v !== null ? v : fallback;
+          } catch (e) {
+            return fallback;
+          }
+        },
+        set(key, val) {
+          try { window.localStorage.setItem(key, String(val)); } catch (e) {}
+        }
+      };
 
-      // Sacred Geometry Constants
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+      const bgCanvas = document.createElement('canvas');
+      const bgCtx = bgCanvas.getContext('2d', { alpha: false });
+
       const PHI = (1 + Math.sqrt(5)) / 2;
       const INV_PHI = 1 / PHI;
       const GOLDEN_ANGLE = Math.PI * 2 * (1 - INV_PHI);
       const LOG_PHI = Math.log(PHI) / (Math.PI / 2);
+      const TAU = Math.PI * 2;
+      const PHASE_WRAP = TAU * 100;
 
-      // Color Palettes
+      // 8 Curated Harmonic Color Themes + Individual Background Signatures
       const THEMES = [
-        {
-          name: 'Aurum',
-          primary: [236, 201, 100],   // Imperial Gold
-          secondary: [255, 140, 66],  // Warm Amber
-          accent: [255, 250, 225]     // Starlight Core
-        },
-        {
-          name: 'Aether',
-          primary: [92, 225, 230],    // Cyber Cyan
-          secondary: [138, 92, 245],  // Deep Violet
-          accent: [230, 255, 255]     // Ice Core
-        },
-        {
-          name: 'Solaris',
-          primary: [255, 77, 109],    // Crimson Pulse
-          secondary: [247, 184, 1],   // Solar Gold
-          accent: [255, 235, 240]     // White-Hot Core
-        }
+        { name: 'Aurum (Gold)',        bgDesc: 'CELESTIAL ASTROLABE',  hex: '#ecc964', p: 'rgb(236,201,100)', s: 'rgb(255,140,66)',  a: 'rgb(255,250,225)', pRaw: [236,201,100], sRaw: [255,140,66],  bg: [8, 6, 11] },
+        { name: 'Aether (Cyan)',       bgDesc: 'CYBER HORIZON GRID',   hex: '#5ce1e6', p: 'rgb(92,225,230)',  s: 'rgb(138,92,245)',  a: 'rgb(230,255,255)', pRaw: [92,225,230],  sRaw: [138,92,245],  bg: [3, 8, 15] },
+        { name: 'Solaris (Crimson)',   bgDesc: 'SOLAR CORONA ECLIPSE', hex: '#ff4d6d', p: 'rgb(255,77,109)',  s: 'rgb(247,184,1)',   a: 'rgb(255,235,240)', pRaw: [255,77,109],  sRaw: [247,184,1],   bg: [13, 3, 7] },
+        { name: 'Emerald (Jade)',      bgDesc: 'BIO-HEXAGON MATRIX',   hex: '#50eb9b', p: 'rgb(80,235,155)',  s: 'rgb(20,165,140)',  a: 'rgb(230,255,240)', pRaw: [80,235,155],  sRaw: [20,165,140],  bg: [2, 11, 8] },
+        { name: 'Orchid (Violet)',     bgDesc: 'SACRED LOTUS MANDALA', hex: '#d76eff', p: 'rgb(215,110,255)', s: 'rgb(255,85,165)',  a: 'rgb(250,230,255)', pRaw: [215,110,255], sRaw: [255,85,165],  bg: [10, 3, 15] },
+        { name: 'Sakura (Blossom)',    bgDesc: 'ZEN WATER RIPPLES',    hex: '#ff9ebb', p: 'rgb(255,158,187)', s: 'rgb(195,105,215)', a: 'rgb(255,245,250)', pRaw: [255,158,187], sRaw: [195,105,215], bg: [11, 5, 12] },
+        { name: 'Abyssal (Ocean)',     bgDesc: 'BATHYMETRIC SONAR',    hex: '#3a86ff', p: 'rgb(58,134,255)',  s: 'rgb(131,56,236)',  a: 'rgb(220,240,255)', pRaw: [58,134,255],  sRaw: [131,56,236],  bg: [2, 5, 16] },
+        { name: 'Monochrome (Silver)', bgDesc: 'SWISS CAD BLUEPRINT',  hex: '#dcdee6', p: 'rgb(220,222,230)', s: 'rgb(120,124,138)', a: 'rgb(255,255,255)', pRaw: [220,222,230], sRaw: [120,124,138], bg: [6, 6, 8] }
       ];
-      let themeIdx = 0;
 
-      // Viewport State
-      let width, height, cx, cy, minDim;
+      // Background Modes: 0 = Theme Background (Individual), 1 = Sacred Cosmos, 2 = Deep Void
+      const BG_MODE_NAMES = ['Theme Background', 'Sacred Cosmos', 'Deep Void'];
 
-      // Auto-Tuned Parameters
-      let autoTune = true;
-      let nodeCount = 480;
-      let targetNodes = 480;
-      let tension = 0.62;
-      let targetTension = 0.62;
-      let phase = 0;
+      let themeIdx = parseInt(safeStorage.get('phi_theme', '0'), 10);
+      if (isNaN(themeIdx) || themeIdx < 0 || themeIdx >= THEMES.length) themeIdx = 0;
 
-      // Audio DSP & Beat Detection State
-      let audioCtx = null;
-      let analyser = null;
-      let freqData = new Uint8Array(1024);
-      let timeData = new Uint8Array(1024);
+      let bgMode = parseInt(safeStorage.get('phi_bg', '0'), 10);
+      if (isNaN(bgMode) || bgMode < 0 || bgMode > 2) bgMode = 0;
+
+      // Pre-allocated Structure-of-Arrays (SoA)
+      const MAX_NODES = 780;
+      const nodeX = new Float32Array(MAX_NODES);
+      const nodeY = new Float32Array(MAX_NODES);
+      const nodeR = new Float32Array(MAX_NODES);
+      const nodeTh = new Float32Array(MAX_NODES);
+      const nodeE = new Float32Array(MAX_NODES);
+      const nodeNorm = new Float32Array(MAX_NODES);
+
+      // Background Ambient Particle Pool (180 particles used for both Starfield & Theme-Specific Particles)
+      const MAX_STARS = 180;
+      const starR = new Float32Array(MAX_STARS);
+      const starTh = new Float32Array(MAX_STARS);
+      const starSz = new Float32Array(MAX_STARS);
+      const starPhase = new Float32Array(MAX_STARS);
+      for (let i = 0; i < MAX_STARS; i++) {
+        starR[i] = 0.18 + Math.pow(i / MAX_STARS, 0.78) * 0.84;
+        starTh[i] = i * GOLDEN_ANGLE * 7.0;
+        starSz[i] = 0.7 + (i % 5) * 0.32;
+        starPhase[i] = i * 0.43;
+      }
+
+      // Sparks & Ripples Pools
+      const MAX_SPARKS = 32;
+      const sparkX = new Float32Array(MAX_SPARKS);
+      const sparkY = new Float32Array(MAX_SPARKS);
+      const sparkVX = new Float32Array(MAX_SPARKS);
+      const sparkVY = new Float32Array(MAX_SPARKS);
+      const sparkLife = new Float32Array(MAX_SPARKS);
+      const sparkDecay = new Float32Array(MAX_SPARKS);
+
+      const MAX_RIPPLES = 2;
+      const rippleR = new Float32Array(MAX_RIPPLES);
+      const rippleA = new Float32Array(MAX_RIPPLES);
+
+      const HIST_LEN = 40;
+      const energyHistory = new Float32Array(HIST_LEN).fill(0.05);
+      let histIdx = 0;
+      let energySum = 40 * 0.05;
+
+      // Spiral LUT
+      const SPIRAL_STEPS = 280;
+      const spiralBaseR = new Float32Array(SPIRAL_STEPS + 1);
+      const spiralPct = new Float32Array(SPIRAL_STEPS + 1);
+      const spiralBin = new Uint16Array(SPIRAL_STEPS + 1);
+      for (let i = 0; i <= SPIRAL_STEPS; i++) {
+        const pct = i / SPIRAL_STEPS;
+        spiralPct[i] = pct;
+        spiralBaseR[i] = 3.0 * Math.exp(LOG_PHI * (pct * Math.PI * 8.0));
+        spiralBin[i] = (pct * 128) | 0;
+      }
+
+      let width = 0, height = 0, cx = 0, cy = 0, minDim = 0, maxDiag = 0, dpr = 1;
+      let autoTune = true, showWeb = true, showSparks = true;
+      let nodeCount = 480, targetNodes = 480;
+      let tension = 0.62, targetTension = 0.62;
+      let speedMult = 1.0;
+      let trailPersistence = 0.74;
+      let phase = 0, frameCount = 0;
+
+      let cachedCoreGrad = null;
+
+      // Audio DSP & System Audio State
+      let audioCtx = null, analyser = null;
+      let freqData = new Uint8Array(512);
+      let timeData = new Uint8Array(512);
       let activeSourceType = null;
-      let micStream = null;
-      let synthNodes = [];
-      let synthTimer = null;
-      let audioElement = null;
+      let sysAudioEnabled = true;
+      let lastWallpaperPacketTime = 0;
+      let rollingPeak = 0.25;
+      let micStream = null, sysStream = null, synthNodes = [], synthTimer = null;
+      let audioElement = null, mediaElementSource = null, currentObjectURL = null;
 
-      // Smooth Envelope Followers
       let smoothBass = 0, smoothMid = 0, smoothHigh = 0, smoothCentroid = 0;
-      let audioGate = 0; 
-      let energyHistory = new Array(40).fill(0.05);
-      let beatCooldown = 0;
-      let beatFlash = 0;
+      let audioGate = 0, beatCooldown = 0, beatFlash = 0;
 
       // UI References
       const statusDot = document.getElementById('statusDot');
-      const badgeAuto = document.getElementById('badgeAuto');
+      const brandSubText = document.getElementById('brandSubText');
+      const badgeSource = document.getElementById('badgeSource');
       const badgeBeat = document.getElementById('badgeBeat');
       const telAngle = document.getElementById('telAngle');
       const telBass = document.getElementById('telBass');
@@ -360,46 +628,621 @@
       const telNodes = document.getElementById('telNodes');
       const telZ = document.getElementById('telZ');
 
-      const btnSynth = document.getElementById('btnSynth');
-      const btnMic = document.getElementById('btnMic');
-      const audioFileInput = document.getElementById('audioFile');
-      const btnAuto = document.getElementById('btnAuto');
-      const btnTheme = document.getElementById('btnTheme');
       const nodeSlider = document.getElementById('nodeSlider');
       const tensionSlider = document.getElementById('tensionSlider');
+      const speedSlider = document.getElementById('speedSlider');
+      const trailSlider = document.getElementById('trailSlider');
+      const lblNodes = document.getElementById('lblNodes');
+      const lblTension = document.getElementById('lblTension');
+      const lblSpeed = document.getElementById('lblSpeed');
+      const lblTrail = document.getElementById('lblTrail');
+
+      const themeDropdown = document.getElementById('themeDropdown');
+      const themeTrigger = document.getElementById('themeTrigger');
+      const themeLabel = document.getElementById('themeLabel');
+      const themeMenu = document.getElementById('themeMenu');
+
+      const bgDropdown = document.getElementById('bgDropdown');
+      const bgTrigger = document.getElementById('bgTrigger');
+      const bgLabel = document.getElementById('bgLabel');
+      const bgMenu = document.getElementById('bgMenu');
+
+      const btnWeb = document.getElementById('btnWeb');
+      const btnSysAudio = document.getElementById('btnSysAudio');
+      const btnMic = document.getElementById('btnMic');
+      const btnSynth = document.getElementById('btnSynth');
+      const audioFileInput = document.getElementById('audioFile');
+      const btnAuto = document.getElementById('btnAuto');
+      const btnSparks = document.getElementById('btnSparks');
+
+      // =========================================================================
+      // LIVELY WALLPAPER & WALLPAPER ENGINE NATIVE HOOKS
+      // =========================================================================
+      function processWallpaperSystemAudio(audioArray) {
+        if (!sysAudioEnabled || !audioArray) return;
+        if (activeSourceType === 'mic' || activeSourceType === 'synth' || activeSourceType === 'file') return;
+
+        const now = performance.now();
+        const wasInactive = (now - lastWallpaperPacketTime) >= 1500;
+        lastWallpaperPacketTime = now;
+
+        const srcLen = audioArray.length;
+        if (!srcLen) return;
+
+        const halfLen = srcLen >= 128 ? 64 : srcLen;
+        let framePeak = 0.0001;
+        for (let i = 0; i < srcLen; i++) {
+          const v = audioArray[i];
+          if (v > framePeak) framePeak = v;
+        }
+
+        if (framePeak > rollingPeak) {
+          rollingPeak += (framePeak - rollingPeak) * 0.25;
+        } else {
+          rollingPeak = Math.max(0.05, rollingPeak * 0.995);
+        }
+
+        const invPeak = framePeak > 0.001 ? (1.0 / rollingPeak) : 0;
+
+        for (let i = 0; i < 240; i++) {
+          const pos = (i / 240) * (halfLen - 1);
+          const idx0 = pos | 0;
+          const idx1 = idx0 + 1 < halfLen ? idx0 + 1 : idx0;
+          const frac = pos - idx0;
+
+          const lVal = audioArray[idx0] * (1 - frac) + audioArray[idx1] * frac;
+          const rVal = srcLen >= 128
+            ? audioArray[idx0 + 64] * (1 - frac) + audioArray[idx1 + 64] * frac
+            : lVal;
+
+          let norm = (lVal + rVal) * 0.5 * invPeak;
+          if (norm > 1.0) norm = 1.0;
+          else if (norm < 0) norm = 0;
+
+          const byteVal = (Math.pow(norm, 0.82) * 255) | 0;
+          freqData[i] = byteVal;
+          timeData[i] = (128 + Math.sin(i * 0.22 + phase * 5.0) * (byteVal * 0.45)) | 0;
+        }
+
+        if (wasInactive) updateSourceUI();
+      }
+
+      window.livelyAudioListener = processWallpaperSystemAudio;
+      if (window.wallpaperRegisterAudioListener) {
+        window.wallpaperRegisterAudioListener(processWallpaperSystemAudio);
+      }
+
+      window.livelyPropertyListener = function(name, val) {
+        if (name === 'themeIdx') {
+          themeIdx = Math.max(0, Math.min(THEMES.length - 1, parseInt(val, 10) || 0));
+          safeStorage.set('phi_theme', themeIdx);
+          applyThemeAndBg();
+        } else if (name === 'bgMode') {
+          bgMode = Math.max(0, Math.min(2, parseInt(val, 10) || 0));
+          safeStorage.set('phi_bg', bgMode);
+          applyThemeAndBg();
+        } else if (name === 'speedMult') {
+          speedMult = (parseInt(val, 10) || 100) / 100;
+          speedSlider.value = Math.round(speedMult * 100);
+          lblSpeed.textContent = Math.round(speedMult * 100) + '%';
+        } else if (name === 'trailPersist') {
+          trailPersistence = (parseInt(val, 10) || 74) / 100;
+          trailSlider.value = Math.round(trailPersistence * 100);
+          lblTrail.textContent = Math.round(trailPersistence * 100) + '%';
+        } else if (name === 'showHud') {
+          document.body.classList.toggle('hide-hud', !val);
+        }
+      };
+
+      async function startBrowserSystemAudioCapture() {
+        stopOverrideSources(false);
+        initAudio();
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            sysStream = await navigator.mediaDevices.getDisplayMedia({
+              video: true,
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+              }
+            });
+            sysStream.getVideoTracks().forEach(t => t.stop());
+
+            const audioTracks = sysStream.getAudioTracks();
+            if (audioTracks.length === 0) {
+              throw new Error('No system audio track shared.');
+            }
+
+            const src = audioCtx.createMediaStreamSource(sysStream);
+            src.connect(analyser);
+            synthNodes.push(src);
+            activeSourceType = 'sys_stream';
+            sysAudioEnabled = true;
+            audioTracks[0].onended = () => {
+              if (activeSourceType === 'sys_stream') {
+                activeSourceType = null;
+                updateSourceUI();
+              }
+            };
+            updateSourceUI();
+          }
+        } catch (err) {
+          sysAudioEnabled = true;
+          updateSourceUI();
+        }
+      }
+
+      function updateSourceUI() {
+        const wallpaperActive = sysAudioEnabled && (performance.now() - lastWallpaperPacketTime < 1500);
+        btnMic.classList.toggle('active', activeSourceType === 'mic');
+        btnMic.textContent = activeSourceType === 'mic' ? 'Mic In: ON' : 'Mic In: OFF';
+
+        btnSynth.classList.toggle('active', activeSourceType === 'synth');
+        btnSynth.textContent = activeSourceType === 'synth' ? 'Φ Synth: ON' : 'Φ Synth: OFF';
+
+        const sysActive = activeSourceType === 'sys_stream' || (sysAudioEnabled && !activeSourceType);
+        btnSysAudio.classList.toggle('active', sysActive);
+        btnSysAudio.textContent = (activeSourceType === 'sys_stream' || wallpaperActive)
+          ? 'Sys Audio: SYNCED'
+          : (sysAudioEnabled ? 'Sys Audio: AUTO' : 'Sys Audio: OFF');
+
+        if (activeSourceType === 'mic') {
+          badgeSource.textContent = 'SOURCE: LIVE MIC OVERRIDE';
+          statusDot.classList.add('active');
+        } else if (activeSourceType === 'synth') {
+          badgeSource.textContent = 'SOURCE: Φ HARMONIC SYNTH';
+          statusDot.classList.add('active');
+        } else if (activeSourceType === 'file') {
+          badgeSource.textContent = 'SOURCE: LOCAL AUDIO FILE';
+          statusDot.classList.add('active');
+        } else if (activeSourceType === 'sys_stream' || wallpaperActive) {
+          badgeSource.textContent = 'SOURCE: DEVICE AUDIO SYNC';
+          statusDot.classList.add('active');
+        } else {
+          badgeSource.textContent = sysAudioEnabled ? 'SOURCE: AUTO DEVICE SYNC' : 'SOURCE: IDLE BREATHING';
+          statusDot.classList.toggle('active', sysAudioEnabled);
+        }
+      }
+
+      // =========================================================================
+      // INDIVIDUAL THEME BACKGROUND GENERATOR (8 Bespoke Procedural Backdrops)
+      // =========================================================================
+      function drawIndividualThemeBackground(p, s) {
+        bgCtx.save();
+
+        if (themeIdx === 0) {
+          // 0. AURUM: Celestial Astrolabe & Nested Whirling Golden Rectangles
+          bgCtx.translate(cx, cy);
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.065)`;
+          bgCtx.lineWidth = 0.8;
+
+          // Compass Meridian Crosshairs
+          bgCtx.beginPath();
+          bgCtx.moveTo(-width * 0.5, 0); bgCtx.lineTo(width * 0.5, 0);
+          bgCtx.moveTo(0, -height * 0.5); bgCtx.lineTo(0, height * 0.5);
+          bgCtx.stroke();
+
+          // Asymptotic-centered Golden Rectangle Subdivisions
+          const maxS = maxDiag * 0.42;
+          let rw = maxS * PHI, rh = maxS;
+          let rx = -rw * 0.7236068, ry = -rh * 0.2763932;
+          bgCtx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            bgCtx.rect(rx, ry, rw, rh);
+            const sq = Math.min(rw, rh);
+            if (i % 4 === 0) { rx += sq; rw -= sq; }
+            else if (i % 4 === 1) { ry += sq; rh -= sq; }
+            else if (i % 4 === 2) { rw -= sq; }
+            else { rh -= sq; }
+          }
+          bgCtx.stroke();
+
+          // Astrolabe Degree Rings
+          const rAstro = minDim * 0.46;
+          bgCtx.strokeStyle = `rgba(${s[0]},${s[1]},${s[2]},0.075)`;
+          bgCtx.beginPath();
+          bgCtx.arc(0, 0, rAstro, 0, TAU);
+          bgCtx.arc(0, 0, rAstro * PHI * 0.75, 0, TAU);
+          for (let j = 0; j < 72; j++) {
+            const a = (j / 72) * TAU;
+            const len = j % 6 === 0 ? 10 : 4;
+            bgCtx.moveTo(Math.cos(a) * rAstro, Math.sin(a) * rAstro);
+            bgCtx.lineTo(Math.cos(a) * (rAstro + len), Math.sin(a) * (rAstro + len));
+          }
+          bgCtx.stroke();
+
+        } else if (themeIdx === 1) {
+          // 1. AETHER: 3D Perspective Cyber Horizon Grid + Upper Circuit Nodes
+          const horizonY = cy + minDim * 0.14;
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.075)`;
+          bgCtx.lineWidth = 0.75;
+          bgCtx.beginPath();
+          // Perspective fan lines from center vanishing point
+          for (let i = -18; i <= 18; i++) {
+            bgCtx.moveTo(cx + i * 18, horizonY);
+            bgCtx.lineTo(cx + i * (width * 0.14), height);
+          }
+          // Exponential horizontal depth lines
+          for (let j = 1; j <= 14; j++) {
+            const py = horizonY + Math.pow(j / 14, 1.85) * (height - horizonY);
+            bgCtx.moveTo(0, py);
+            bgCtx.lineTo(width, py);
+          }
+          bgCtx.stroke();
+
+          // Upper sky digital constellation grid
+          bgCtx.strokeStyle = `rgba(${s[0]},${s[1]},${s[2]},0.055)`;
+          const step = 90;
+          bgCtx.beginPath();
+          for (let x = step; x < width; x += step) {
+            for (let y = step * 0.5; y < horizonY - 20; y += step) {
+              bgCtx.moveTo(x - 5, y); bgCtx.lineTo(x + 5, y);
+              bgCtx.moveTo(x, y - 5); bgCtx.lineTo(x, y + 5);
+            }
+          }
+          bgCtx.stroke();
+
+        } else if (themeIdx === 2) {
+          // 2. SOLARIS: Solar Corona Burst & 55 Fibonacci Sunburst Rays
+          bgCtx.translate(cx, cy);
+          bgCtx.strokeStyle = `rgba(${s[0]},${s[1]},${s[2]},0.055)`;
+          bgCtx.lineWidth = 0.9;
+          bgCtx.beginPath();
+          for (let i = 0; i < 55; i++) {
+            const a = (i / 55) * TAU;
+            const rIn = minDim * (i % 2 === 0 ? 0.18 : 0.28);
+            const rOut = maxDiag * (i % 3 === 0 ? 0.55 : 0.42);
+            bgCtx.moveTo(Math.cos(a) * rIn, Math.sin(a) * rIn);
+            bgCtx.lineTo(Math.cos(a) * rOut, Math.sin(a) * rOut);
+          }
+          bgCtx.stroke();
+
+          // Solar prominence coronal arcs
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.07)`;
+          bgCtx.lineWidth = 1.1;
+          for (let k = 1; k <= 5; k++) {
+            bgCtx.beginPath();
+            bgCtx.arc(0, 0, minDim * 0.14 * k, k * 0.7, k * 0.7 + Math.PI * 0.65);
+            bgCtx.stroke();
+          }
+
+        } else if (themeIdx === 3) {
+          // 3. EMERALD: Bio-Luminescent Honeycomb Hexagonal Lattice
+          const hexR = 46;
+          const hexW = Math.sqrt(3) * hexR;
+          const hexH = 1.5 * hexR;
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.055)`;
+          bgCtx.lineWidth = 0.7;
+          bgCtx.beginPath();
+          const rows = Math.ceil(height / hexH) + 1;
+          const cols = Math.ceil(width / hexW) + 1;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const hx = c * hexW + (r % 2 === 1 ? hexW * 0.5 : 0);
+              const hy = r * hexH;
+              // Fade out hexagons right at the center so spiral stays crisp
+              if (Math.hypot(hx - cx, hy - cy) < minDim * 0.18) continue;
+              for (let side = 0; side < 6; side++) {
+                const a = (side / 6) * TAU + Math.PI / 6;
+                const vx = hx + Math.cos(a) * hexR;
+                const vy = hy + Math.sin(a) * hexR;
+                if (side === 0) bgCtx.moveTo(vx, vy);
+                else bgCtx.lineTo(vx, vy);
+              }
+              bgCtx.closePath();
+            }
+          }
+          bgCtx.stroke();
+
+        } else if (themeIdx === 4) {
+          // 4. ORCHID: Sacred 13-Petal Lotus Mandala & Hypotrochoid Rose Curve
+          bgCtx.translate(cx, cy);
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.065)`;
+          bgCtx.lineWidth = 0.85;
+          for (let layer = 1; layer <= 3; layer++) {
+            const rad = minDim * (0.22 + layer * 0.14);
+            bgCtx.beginPath();
+            for (let sStep = 0; sStep <= 360; sStep++) {
+              const th = (sStep / 360) * TAU;
+              const rCurve = rad * (0.72 + 0.28 * Math.cos(13 * th + layer));
+              const x = Math.cos(th) * rCurve;
+              const y = Math.sin(th) * rCurve;
+              if (sStep === 0) bgCtx.moveTo(x, y);
+              else bgCtx.lineTo(x, y);
+            }
+            bgCtx.closePath();
+            bgCtx.stroke();
+          }
+
+        } else if (themeIdx === 5) {
+          // 5. SAKURA: Zen Garden Concentric Water Ripples in Screen Corners
+          constpondCenters = [
+            [width * 0.18, height * 0.22],
+            [width * 0.82, height * 0.78],
+            [width * 0.80, height * 0.20],
+            [width * 0.20, height * 0.80]
+          ];
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.055)`;
+          bgCtx.lineWidth = 0.8;
+          for (let idx = 0; idx < pondCenters.length; idx++) {
+            const px = pondCenters[idx][0], py = pondCenters[idx][1];
+            for (let k = 1; k <= 7; k++) {
+              bgCtx.beginPath();
+              bgCtx.arc(px, py, k * 34, 0, TAU);
+              bgCtx.stroke();
+            }
+          }
+
+        } else if (themeIdx === 6) {
+          // 6. ABYSSAL: Bathymetric Sonar Contours & Radar Sweep Grid
+          bgCtx.translate(cx, cy);
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.06)`;
+          bgCtx.lineWidth = 0.8;
+          for (let k = 1; k <= 10; k++) {
+            const baseR = k * (maxDiag * 0.052);
+            bgCtx.beginPath();
+            for (let step = 0; step <= 180; step++) {
+              const a = (step / 180) * TAU;
+              // Organic bathymetric contour warps
+              const warp = Math.sin(a * 3 + k) * 12 + Math.cos(a * 5 - k) * 8;
+              const r = baseR + warp;
+              const x = Math.cos(a) * r, y = Math.sin(a) * r;
+              if (step === 0) bgCtx.moveTo(x, y);
+              else bgCtx.lineTo(x, y);
+            }
+            bgCtx.closePath();
+            bgCtx.stroke();
+          }
+
+        } else {
+          // 7. MONOCHROME: Swiss Precision CAD Blueprint & Registration Grid
+          const step = 64;
+          bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.045)`;
+          bgCtx.lineWidth = 0.6;
+          bgCtx.beginPath();
+          for (let x = 0; x < width; x += step) {
+            bgCtx.moveTo(x, 0); bgCtx.lineTo(x, height);
+          }
+          for (let y = 0; y < height; y += step) {
+            bgCtx.moveTo(0, y); bgCtx.lineTo(width, y);
+          }
+          // Diagonal architectural spec lines
+          bgCtx.moveTo(0, 0); bgCtx.lineTo(width, height);
+          bgCtx.moveTo(width, 0); bgCtx.lineTo(0, height);
+          bgCtx.stroke();
+
+          bgCtx.strokeRect(20, 20, width - 40, height - 40);
+        }
+
+        bgCtx.restore();
+      }
+
+      // Pre-renders the atmospheric background into bgCanvas
+      function buildBackgroundPlate() {
+        if (!width || !height) return;
+        const pal = THEMES[themeIdx];
+        const p = pal.pRaw;
+        const s = pal.sRaw;
+        const bg = pal.bg;
+
+        document.documentElement.style.setProperty('--gold', pal.hex);
+        document.documentElement.style.setProperty('--border', `rgba(${p[0]},${p[1]},${p[2]},0.26)`);
+
+        if (bgMode === 0) {
+          brandSubText.textContent = `THEME BG: ${pal.bgDesc}`;
+        } else if (bgMode === 1) {
+          brandSubText.textContent = 'BG MODE: SACRED COSMOS BLUEPRINT';
+        } else {
+          brandSubText.textContent = 'BG MODE: MINIMAL DEEP VOID';
+        }
+
+        bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // 1. Base Deep Tinted Void
+        bgCtx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+        bgCtx.fillRect(0, 0, width, height);
+
+        if (bgMode === 2) return; // Mode 2 = Deep Void
+
+        // 2. Outer Atmospheric Nebula Clouds (Shared by Mode 0 & Mode 1)
+        const nebGrad1 = bgCtx.createRadialGradient(cx, cy, minDim * 0.1, cx, cy, maxDiag * 0.65);
+        nebGrad1.addColorStop(0, `rgba(${p[0]},${p[1]},${p[2]},0.095)`);
+        nebGrad1.addColorStop(0.45, `rgba(${s[0]},${s[1]},${s[2]},0.065)`);
+        nebGrad1.addColorStop(0.8, `rgba(${p[0]},${p[1]},${p[2]},0.025)`);
+        nebGrad1.addColorStop(1, 'rgba(0,0,0,0)');
+        bgCtx.fillStyle = nebGrad1;
+        bgCtx.fillRect(0, 0, width, height);
+
+        const nebGrad2 = bgCtx.createRadialGradient(width * 0.18, height * 0.2, 10, width * 0.18, height * 0.2, maxDiag * 0.45);
+        nebGrad2.addColorStop(0, `rgba(${s[0]},${s[1]},${s[2]},0.055)`);
+        nebGrad2.addColorStop(1, 'rgba(0,0,0,0)');
+        bgCtx.fillStyle = nebGrad2;
+        bgCtx.fillRect(0, 0, width, height);
+
+        const nebGrad3 = bgCtx.createRadialGradient(width * 0.82, height * 0.8, 10, width * 0.82, height * 0.8, maxDiag * 0.45);
+        nebGrad3.addColorStop(0, `rgba(${p[0]},${p[1]},${p[2]},0.055)`);
+        nebGrad3.addColorStop(1, 'rgba(0,0,0,0)');
+        bgCtx.fillStyle = nebGrad3;
+        bgCtx.fillRect(0, 0, width, height);
+
+        if (bgMode === 0) {
+          // Mode 0: Draw Bespoke Individual Theme Background!
+          drawIndividualThemeBackground(p, s);
+          return;
+        }
+
+        // Mode 1: Universal Sacred Cosmos Blueprint Grid
+        bgCtx.save();
+        bgCtx.translate(cx, cy);
+
+        bgCtx.lineWidth = 0.75;
+        let rRing = maxDiag * 0.52;
+        for (let k = 0; k < 9; k++) {
+          bgCtx.strokeStyle = k % 2 === 0
+            ? `rgba(${p[0]},${p[1]},${p[2]},0.055)`
+            : `rgba(${s[0]},${s[1]},${s[2]},0.04)`;
+          bgCtx.beginPath();
+          bgCtx.arc(0, 0, rRing, 0, TAU);
+          bgCtx.stroke();
+
+          if (k < 4) {
+            const ticks = 34;
+            bgCtx.beginPath();
+            for (let j = 0; j < ticks; j++) {
+              const a = (j / ticks) * TAU;
+              const cosA = Math.cos(a), sinA = Math.sin(a);
+              bgCtx.moveTo(cosA * (rRing - 3), sinA * (rRing - 3));
+              bgCtx.lineTo(cosA * (rRing + 3), sinA * (rRing + 3));
+            }
+            bgCtx.stroke();
+          }
+          rRing *= INV_PHI;
+        }
+
+        bgCtx.strokeStyle = `rgba(${p[0]},${p[1]},${p[2]},0.032)`;
+        bgCtx.lineWidth = 0.6;
+        bgCtx.beginPath();
+        for (let i = 0; i < 21; i++) {
+          const rayAngle = i * GOLDEN_ANGLE;
+          bgCtx.moveTo(Math.cos(rayAngle) * (minDim * 0.12), Math.sin(rayAngle) * (minDim * 0.12));
+          bgCtx.lineTo(Math.cos(rayAngle) * (maxDiag * 0.55), Math.sin(rayAngle) * (maxDiag * 0.55));
+        }
+        bgCtx.stroke();
+
+        bgCtx.restore();
+
+        const gridStep = 72;
+        bgCtx.fillStyle = `rgba(${p[0]},${p[1]},${p[2]},0.065)`;
+        for (let gx = gridStep / 2; gx < width; gx += gridStep) {
+          for (let gy = gridStep / 2; gy < height; gy += gridStep) {
+            bgCtx.fillRect(gx - 0.5, gy - 0.5, 1.2, 1.2);
+          }
+        }
+      }
+
+      function buildCoreGradient() {
+        if (!minDim) return;
+        const pal = THEMES[themeIdx];
+        const maxR = minDim * 0.44 * 0.68;
+        cachedCoreGrad = ctx.createRadialGradient(0, 0, 1, 0, 0, maxR);
+        cachedCoreGrad.addColorStop(0, `rgba(${pal.pRaw[0]},${pal.pRaw[1]},${pal.pRaw[2]},0.22)`);
+        cachedCoreGrad.addColorStop(0.6, `rgba(${pal.sRaw[0]},${pal.sRaw[1]},${pal.sRaw[2]},0.06)`);
+        cachedCoreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      }
+
+      function applyThemeAndBg() {
+        themeLabel.textContent = THEMES[themeIdx].name;
+        const tItems = themeMenu.querySelectorAll('.dropdown-item');
+        for (let i = 0; i < tItems.length; i++) {
+          tItems[i].classList.toggle('selected', i === themeIdx);
+        }
+
+        bgLabel.textContent = BG_MODE_NAMES[bgMode];
+        const bItems = bgMenu.querySelectorAll('.dropdown-item');
+        for (let i = 0; i < bItems.length; i++) {
+          bItems[i].classList.toggle('selected', i === bgMode);
+        }
+
+        buildCoreGradient();
+        buildBackgroundPlate();
+        if (width && height) {
+          ctx.globalAlpha = 1.0;
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.drawImage(bgCanvas, 0, 0, width, height);
+        }
+      }
+
+      // Custom In-DOM Dropdown Handlers
+      themeTrigger.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        bgDropdown.classList.remove('open');
+        themeDropdown.classList.toggle('open');
+      });
+
+      bgTrigger.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        themeDropdown.classList.remove('open');
+        bgDropdown.classList.toggle('open');
+      });
+
+      themeMenu.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        const item = e.target.closest('.dropdown-item');
+        if (!item) return;
+        themeIdx = parseInt(item.getAttribute('data-val'), 10);
+        safeStorage.set('phi_theme', themeIdx);
+        themeDropdown.classList.remove('open');
+        applyThemeAndBg();
+      });
+
+      bgMenu.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        const item = e.target.closest('.dropdown-item');
+        if (!item) return;
+        bgMode = parseInt(item.getAttribute('data-val'), 10);
+        safeStorage.set('phi_bg', bgMode);
+        bgDropdown.classList.remove('open');
+        applyThemeAndBg();
+      });
+
+      window.addEventListener('pointerdown', () => {
+        themeDropdown.classList.remove('open');
+        bgDropdown.classList.remove('open');
+      });
 
       function resize() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         width = window.innerWidth;
         height = window.innerHeight;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        bgCanvas.width = canvas.width;
+        bgCanvas.height = canvas.height;
+
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        cx = width / 2;
-        cy = height / 2;
+        cx = width * 0.5;
+        cy = height * 0.5;
         minDim = Math.min(width, height);
+        maxDiag = Math.hypot(width, height);
+
+        applyThemeAndBg();
       }
       window.addEventListener('resize', resize);
       resize();
 
+      let isPageVisible = true;
+      document.addEventListener('visibilitychange', () => {
+        isPageVisible = !document.hidden;
+      });
+
       function initAudio() {
         if (!audioCtx) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          audioCtx = new AudioContext();
-          analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 2048;
-          analyser.smoothingTimeConstant = 0.78;
-          freqData = new Uint8Array(analyser.frequencyBinCount);
-          timeData = new Uint8Array(analyser.frequencyBinCount);
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 1024;
+            analyser.smoothingTimeConstant = 0.78;
+            freqData = new Uint8Array(analyser.frequencyBinCount);
+            timeData = new Uint8Array(analyser.frequencyBinCount);
+          } catch (err) {}
         }
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
       }
 
-      function stopCurrentAudio() {
-        synthNodes.forEach(n => {
-          try { n.stop ? n.stop() : n.disconnect(); } catch (e) {}
-        });
-        synthNodes = [];
+      function stopOverrideSources(keepSysStream = true) {
+        for (let i = 0; i < synthNodes.length; i++) {
+          const n = synthNodes[i];
+          try {
+            if (n.stop) n.stop();
+            n.disconnect();
+          } catch (e) {}
+        }
+        synthNodes.length = 0;
+
         if (synthTimer) {
           clearInterval(synthTimer);
           synthTimer = null;
@@ -408,36 +1251,106 @@
           try { analyser.disconnect(); } catch (e) {}
         }
         if (micStream) {
-          micStream.getTracks().forEach(t => t.stop());
+          try { micStream.getTracks().forEach(t => t.stop()); } catch (e) {}
           micStream = null;
         }
+        if (!keepSysStream && sysStream) {
+          try { sysStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+          sysStream = null;
+        }
+        if (mediaElementSource) {
+          try { mediaElementSource.disconnect(); } catch (e) {}
+          mediaElementSource = null;
+        }
         if (audioElement) {
-          audioElement.pause();
+          try {
+            audioElement.pause();
+            audioElement.removeAttribute('src');
+            audioElement.load();
+          } catch (e) {}
           audioElement = null;
         }
+        if (currentObjectURL) {
+          URL.revokeObjectURL(currentObjectURL);
+          currentObjectURL = null;
+        }
 
-        btnSynth.classList.remove('active');
-        btnMic.classList.remove('active');
-        statusDot.classList.remove('active');
-        activeSourceType = null;
+        if (keepSysStream && sysStream && sysStream.active && sysAudioEnabled) {
+          try {
+            const src = audioCtx.createMediaStreamSource(sysStream);
+            src.connect(analyser);
+            synthNodes.push(src);
+            activeSourceType = 'sys_stream';
+          } catch (e) {
+            activeSourceType = null;
+          }
+        } else {
+          activeSourceType = null;
+        }
+
+        updateSourceUI();
       }
 
-      // 1. Φ Synth v2
-      btnSynth.addEventListener('click', () => {
-        if (activeSourceType === 'synth') {
-          stopCurrentAudio();
+      btnSysAudio.addEventListener('click', async () => {
+        if (activeSourceType === 'mic' || activeSourceType === 'synth' || activeSourceType === 'file') {
+          sysAudioEnabled = true;
+          stopOverrideSources(true);
           return;
         }
-        stopCurrentAudio();
+
+        if (activeSourceType === 'sys_stream') {
+          sysAudioEnabled = false;
+          stopOverrideSources(false);
+          return;
+        }
+
+        const wallpaperActive = (performance.now() - lastWallpaperPacketTime) < 1500;
+        if (!wallpaperActive && window.location.protocol.startsWith('http')) {
+          await startBrowserSystemAudioCapture();
+        } else {
+          sysAudioEnabled = !sysAudioEnabled;
+          updateSourceUI();
+        }
+      });
+
+      btnMic.addEventListener('click', async () => {
+        if (activeSourceType === 'mic') {
+          sysAudioEnabled = true;
+          stopOverrideSources(true);
+          return;
+        }
+        stopOverrideSources(true);
+        initAudio();
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const src = audioCtx.createMediaStreamSource(micStream);
+          src.connect(analyser);
+          synthNodes.push(src);
+          activeSourceType = 'mic';
+          updateSourceUI();
+        } catch (err) {
+          stopOverrideSources(true);
+        }
+      });
+
+      btnSynth.addEventListener('click', () => {
+        if (activeSourceType === 'synth') {
+          sysAudioEnabled = true;
+          stopOverrideSources(true);
+          return;
+        }
+        stopOverrideSources(true);
         initAudio();
 
         const master = audioCtx.createGain();
-        master.gain.value = 0.28;
+        master.gain.value = 0.26;
         master.connect(analyser);
         analyser.connect(audioCtx.destination);
 
         const baseFreq = 55;
-        [1, PHI, PHI * PHI, PHI * 2].forEach((ratio, idx) => {
+        const ratios = [1, PHI, PHI * PHI, PHI * 2];
+        for (let idx = 0; idx < ratios.length; idx++) {
+          const ratio = ratios[idx];
           const osc = audioCtx.createOscillator();
           const filter = audioCtx.createBiquadFilter();
           const gain = audioCtx.createGain();
@@ -457,7 +1370,28 @@
           gain.connect(master);
           osc.start();
           synthNodes.push(osc, filter, gain);
-        });
+        }
+
+        const kickOsc = audioCtx.createOscillator();
+        const kickGain = audioCtx.createGain();
+        kickGain.gain.value = 0.0001;
+        kickOsc.connect(kickGain);
+        kickGain.connect(analyser);
+        kickOsc.start();
+
+        const pluckOsc = audioCtx.createOscillator();
+        const pluckFilter = audioCtx.createBiquadFilter();
+        const pluckGain = audioCtx.createGain();
+        pluckOsc.type = 'sawtooth';
+        pluckFilter.type = 'bandpass';
+        pluckFilter.Q.value = 4.0;
+        pluckGain.gain.value = 0.0001;
+        pluckOsc.connect(pluckFilter);
+        pluckFilter.connect(pluckGain);
+        pluckGain.connect(master);
+        pluckOsc.start();
+
+        synthNodes.push(kickOsc, kickGain, pluckOsc, pluckFilter, pluckGain, master);
 
         let step = 0;
         const fibScale = [1, PHI, PHI * 1.25, PHI * PHI, PHI * 2, PHI * 2.5, PHI * PHI * PHI];
@@ -467,142 +1401,149 @@
           const now = audioCtx.currentTime;
 
           if (step % 2 === 0) {
-            const kick = audioCtx.createOscillator();
-            const kGain = audioCtx.createGain();
-            kick.frequency.setValueAtTime(125, now);
-            kick.frequency.exponentialRampToValueAtTime(34, now + 0.24);
-            kGain.gain.setValueAtTime(0.65, now);
-            kGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-            kick.connect(kGain);
-            kGain.connect(analyser);
-            kick.start(now);
-            kick.stop(now + 0.3);
+            kickOsc.frequency.cancelScheduledValues(now);
+            kickGain.gain.cancelScheduledValues(now);
+            kickOsc.frequency.setValueAtTime(125, now);
+            kickOsc.frequency.exponentialRampToValueAtTime(34, now + 0.24);
+            kickGain.gain.setValueAtTime(0.65, now);
+            kickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
           }
 
-          const pluck = audioCtx.createOscillator();
-          const pFilter = audioCtx.createBiquadFilter();
-          const pGain = audioCtx.createGain();
-
           const harmonic = fibScale[(step * 3) % fibScale.length];
-          pluck.type = 'sawtooth';
-          pluck.frequency.setValueAtTime(110 * harmonic, now);
+          pluckOsc.frequency.cancelScheduledValues(now);
+          pluckFilter.frequency.cancelScheduledValues(now);
+          pluckGain.gain.cancelScheduledValues(now);
 
-          pFilter.type = 'bandpass';
-          pFilter.frequency.setValueAtTime(900 * harmonic, now);
-          pFilter.Q.value = 4.0;
-
-          pGain.gain.setValueAtTime(0.24, now);
-          pGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
-
-          pluck.connect(pFilter);
-          pFilter.connect(pGain);
-          pGain.connect(master);
-          pluck.start(now);
-          pluck.stop(now + 0.26);
+          pluckOsc.frequency.setValueAtTime(110 * harmonic, now);
+          pluckFilter.frequency.setValueAtTime(900 * harmonic, now);
+          pluckGain.gain.setValueAtTime(0.24, now);
+          pluckGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
 
           step++;
         }, 260);
 
         activeSourceType = 'synth';
-        btnSynth.classList.add('active');
-        statusDot.classList.add('active');
+        updateSourceUI();
       });
 
-      // 2. Live Microphone Input
-      btnMic.addEventListener('click', async () => {
-        if (activeSourceType === 'mic') {
-          stopCurrentAudio();
-          return;
-        }
-        stopCurrentAudio();
-        initAudio();
-        try {
-          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const src = audioCtx.createMediaStreamSource(micStream);
-          src.connect(analyser);
-          synthNodes.push(src);
-          activeSourceType = 'mic';
-          btnMic.classList.add('active');
-          statusDot.classList.add('active');
-        } catch (err) {
-          alert('Microphone access denied or unavailable.');
-        }
-      });
-
-      // 3. Audio File Loader
       audioFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        stopCurrentAudio();
+        stopOverrideSources(true);
         initAudio();
 
-        const url = URL.createObjectURL(file);
-        audioElement = new Audio(url);
+        currentObjectURL = URL.createObjectURL(file);
+        audioElement = new Audio(currentObjectURL);
         audioElement.loop = true;
-        audioElement.play();
+        audioElement.play().catch(() => {});
 
-        const src = audioCtx.createMediaElementSource(audioElement);
-        src.connect(analyser);
+        mediaElementSource = audioCtx.createMediaElementSource(audioElement);
+        mediaElementSource.connect(analyser);
         analyser.connect(audioCtx.destination);
-        synthNodes.push(src);
 
         activeSourceType = 'file';
-        statusDot.classList.add('active');
+        updateSourceUI();
       });
 
-      // Auto-Tune Toggle
       btnAuto.addEventListener('click', () => {
         autoTune = !autoTune;
         btnAuto.classList.toggle('active', autoTune);
-        btnAuto.textContent = `Auto-Tune: ${autoTune ? 'ON' : 'OFF'}`;
-        badgeAuto.textContent = `AGC AUTO-TUNE: ${autoTune ? 'ON' : 'MANUAL'}`;
+        btnAuto.textContent = autoTune ? 'Auto-Tune: ON' : 'Auto-Tune: OFF';
       });
 
-      // Theme Switcher
-      btnTheme.addEventListener('click', () => {
-        themeIdx = (themeIdx + 1) % THEMES.length;
-        btnTheme.textContent = `Theme: ${THEMES[themeIdx].name}`;
+      btnSparks.addEventListener('click', () => {
+        showSparks = !showSparks;
+        btnSparks.classList.toggle('active', showSparks);
+        btnSparks.textContent = showSparks ? 'Beat Sparks: ON' : 'Beat Sparks: OFF';
       });
 
-      // Manual Sliders
       nodeSlider.addEventListener('input', (e) => {
         if (autoTune) btnAuto.click();
         nodeCount = parseInt(e.target.value, 10);
         targetNodes = nodeCount;
+        lblNodes.textContent = nodeCount;
       });
 
       tensionSlider.addEventListener('input', (e) => {
         if (autoTune) btnAuto.click();
         tension = parseInt(e.target.value, 10) / 100;
         targetTension = tension;
+        lblTension.textContent = Math.round(tension * 100) + '%';
       });
 
-      // Main 60FPS Render Loop
+      speedSlider.addEventListener('input', (e) => {
+        speedMult = parseInt(e.target.value, 10) / 100;
+        lblSpeed.textContent = Math.round(speedMult * 100) + '%';
+      });
+
+      trailSlider.addEventListener('input', (e) => {
+        trailPersistence = parseInt(e.target.value, 10) / 100;
+        lblTrail.textContent = Math.round(trailPersistence * 100) + '%';
+      });
+
+      btnWeb.addEventListener('click', () => {
+        showWeb = !showWeb;
+        btnWeb.classList.toggle('active', showWeb);
+        btnWeb.textContent = showWeb ? 'Mesh Web: ON' : 'Mesh Web: OFF';
+      });
+
+      function spawnSpark(x, y, vx, vy, decay) {
+        for (let i = 0; i < MAX_SPARKS; i++) {
+          if (sparkLife[i] <= 0.01) {
+            sparkX[i] = x;
+            sparkY[i] = y;
+            sparkVX[i] = vx;
+            sparkVY[i] = vy;
+            sparkLife[i] = 1.0;
+            sparkDecay[i] = decay;
+            return;
+          }
+        }
+      }
+
+      function spawnRipple() {
+        for (let i = 0; i < MAX_RIPPLES; i++) {
+          if (rippleA[i] <= 0.01) {
+            rippleR[i] = 8;
+            rippleA[i] = 0.45;
+            return;
+          }
+        }
+      }
+
+      // Main Zero-Allocation, GPU-Batched 60FPS Render Loop
       function render(now) {
         requestAnimationFrame(render);
+        if (!isPageVisible) return;
+
+        frameCount++;
         const t = now * 0.001;
         const palette = THEMES[themeIdx];
         const maxRadius = minDim * 0.44;
 
-        // 1. Extract & Smooth Audio DSP Features
+        const wallpaperStreaming = sysAudioEnabled && !activeSourceType && (now - lastWallpaperPacketTime < 1500);
+        const hasAudioSignal = Boolean(activeSourceType) || wallpaperStreaming;
+
         let rawBass = 0, rawMid = 0, rawHigh = 0, weightedSum = 0, totalSum = 0;
 
-        if (analyser && activeSourceType) {
-          analyser.getByteFrequencyData(freqData);
-          analyser.getByteTimeDomainData(timeData);
+        if (hasAudioSignal) {
+          if (analyser && activeSourceType) {
+            analyser.getByteFrequencyData(freqData);
+            analyser.getByteTimeDomainData(timeData);
+          }
 
-          for (let i = 1; i < 360; i++) {
-            const val = freqData[i] / 255;
-            if (i <= 12) rawBass += val;
-            else if (i <= 65) rawMid += val;
+          for (let i = 1; i < 240; i++) {
+            const val = freqData[i] * 0.0039215686;
+            if (i <= 10) rawBass += val;
+            else if (i <= 55) rawMid += val;
             else rawHigh += val;
 
             weightedSum += i * val;
             totalSum += val;
           }
-          rawBass /= 12;
-          rawMid /= 53;
-          rawHigh /= 294;
+          rawBass /= 10;
+          rawMid /= 45;
+          rawHigh /= 184;
 
           const instantSignal = Math.min(1, (rawBass * 1.6 + rawMid * 1.4 + rawHigh) * 1.5);
           audioGate += (instantSignal - audioGate) * (instantSignal > audioGate ? 0.35 : 0.08);
@@ -610,196 +1551,334 @@
           rawBass = (Math.sin(t * PHI * 1.8) * 0.5 + 0.5) * 0.24;
           rawMid = (Math.cos(t * 2.2) * 0.5 + 0.5) * 0.18;
           rawHigh = (Math.sin(t * PHI * PHI) * 0.5 + 0.5) * 0.12;
-          weightedSum = (rawBass * 10 + rawMid * 50 + rawHigh * 180);
+          weightedSum = rawBass * 10 + rawMid * 50 + rawHigh * 180;
           totalSum = rawBass + rawMid + rawHigh + 0.01;
           audioGate *= 0.9;
         }
 
-        const rawCentroid = totalSum > 0.001 ? Math.min(1, (weightedSum / totalSum) / 140) : 0.25;
+        const rawCentroid = totalSum > 0.001 ? Math.min(1, (weightedSum / totalSum) / 110) : 0.25;
 
         smoothBass += (rawBass - smoothBass) * (rawBass > smoothBass ? 0.35 : 0.1);
         smoothMid += (rawMid - smoothMid) * 0.15;
         smoothHigh += (rawHigh - smoothHigh) * 0.22;
         smoothCentroid += (rawCentroid - smoothCentroid) * 0.1;
 
-        // 2. Transient Beat Detection
+        // 2. O(1) Circular Buffer Beat Detection
         const currentEnergy = rawBass * 0.65 + rawMid * 0.35;
-        const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
-        energyHistory.push(currentEnergy);
-        energyHistory.shift();
+        const avgEnergy = energySum / HIST_LEN;
+        energySum = energySum - energyHistory[histIdx] + currentEnergy;
+        energyHistory[histIdx] = currentEnergy;
+        histIdx = (histIdx + 1) % HIST_LEN;
 
         if (beatCooldown > 0) beatCooldown--;
+        let beatLockedThisFrame = false;
         if (currentEnergy > avgEnergy * 1.3 && currentEnergy > 0.14 && beatCooldown === 0) {
           beatFlash = 1.0;
           beatCooldown = 12;
-          badgeBeat.textContent = 'TRANSIENT: LOCKED';
-          badgeBeat.style.borderColor = '#ecc964';
-        } else if (beatCooldown === 0) {
-          badgeBeat.textContent = 'TRANSIENT: SYNC';
-          badgeBeat.style.borderColor = 'rgba(236, 201, 100, 0.25)';
+          beatLockedThisFrame = true;
+          spawnRipple();
+
+          if (showSparks) {
+            for (let j = 0; j < 6; j++) {
+              const startTh = Math.random() * TAU;
+              const spd = (3.2 + smoothHigh * 7) * speedMult;
+              spawnSpark(
+                Math.cos(startTh) * maxRadius * 0.15,
+                Math.sin(startTh) * maxRadius * 0.15,
+                Math.cos(startTh + 0.5) * spd,
+                Math.sin(startTh + 0.5) * spd,
+                0.025 + Math.random() * 0.03
+              );
+            }
+          }
         }
         beatFlash *= 0.88;
 
-        // 3. AGC Auto-Tune Controller
+        // 3. AGC Auto-Tune
         if (autoTune) {
-          targetNodes = Math.round(380 + (smoothMid * 240) + (smoothHigh * 140));
+          targetNodes = Math.round(380 + smoothMid * 240 + smoothHigh * 140);
           nodeCount = Math.round(nodeCount + (targetNodes - nodeCount) * 0.08);
-          nodeSlider.value = nodeCount;
-
           targetTension = 0.5 + smoothBass * 0.4 + beatFlash * 0.1;
-          tension += (targetTension - tension) * 0.1;
-          tensionSlider.value = Math.round(tension * 100);
+          tension += (targetTension - tension) * 0.12;
         }
 
-        // High-Energy Speed & Phase Progression
         const currentAngle = GOLDEN_ANGLE + (smoothBass * 0.0008) * smoothMid * tension;
-        const speed = (0.0045 + smoothBass * 0.015) * (0.7 + tension * 0.5);
-        phase += speed;
+        phase = (phase + (0.0045 + smoothBass * 0.015) * (0.7 + tension * 0.5) * speedMult) % PHASE_WRAP;
 
-        // 4. Canvas Clear with Trail Accumulation
+        // 4. Stamp Pre-rendered Background Plate for Trail Persistence
         ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = 'rgba(5, 5, 7, 0.26)';
-        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = Math.max(0.08, 1 - trailPersistence);
+        ctx.drawImage(bgCanvas, 0, 0, width, height);
 
         ctx.save();
         ctx.translate(cx, cy);
         ctx.globalCompositeOperation = 'lighter';
 
-        const pRgb = palette.primary;
-        const sRgb = palette.secondary;
-        const aRgb = palette.accent;
+        // 5. Batched Ambient Periphery Particles (Adapts to Theme Background or Sacred Cosmos!)
+        if (bgMode < 2) {
+          const outerScale = maxDiag * 0.52 * (1 + smoothBass * 0.03);
+          ctx.fillStyle = bgMode === 0 ? palette.p : palette.a;
+          ctx.globalAlpha = 0.24 + smoothHigh * 0.3;
+          ctx.beginPath();
 
-        // 5. Ambient Core Nebula
-        const coreGrad = ctx.createRadialGradient(0, 0, 1, 0, 0, maxRadius * (0.42 + smoothBass * 0.35));
-        coreGrad.addColorStop(0, `rgba(${pRgb[0]}, ${pRgb[1]}, ${pRgb[2]}, ${0.12 + smoothBass * 0.18})`);
-        coreGrad.addColorStop(0.6, `rgba(${sRgb[0]}, ${sRgb[1]}, ${sRgb[2]}, ${0.03 + smoothMid * 0.06})`);
-        coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = coreGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, maxRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 6. Matte Continuous 2D Golden Spiral
-        ctx.beginPath();
-        for (let i = 0; i <= 280; i++) {
-          const pct = i / 280;
-          const th = pct * Math.PI * 8.0 - phase * 1.5;
-          const baseR = 3.0 * Math.exp(LOG_PHI * (pct * Math.PI * 8.0));
-          if (baseR > maxRadius * 1.15) break;
-
-          const idx = Math.floor(pct * 128);
-          const wave = activeSourceType ? (timeData[idx] - 128) / 128 : Math.sin(pct * 25 - t * 4) * 0.1;
-          const r = baseR + wave * 18 * tension * (0.5 + smoothBass * 0.5);
-          const x = r * Math.cos(th);
-          const y = r * Math.sin(th);
-
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = `rgba(${pRgb[0]}, ${pRgb[1]}, ${pRgb[2]}, ${0.35 + smoothMid * 0.35})`;
-        ctx.lineWidth = 1.2 + smoothBass * 1.6;
-        ctx.stroke();
-
-        // 7. Compute 2D Phyllotaxis Node Positions
-        const nodes = new Array(nodeCount);
-        for (let i = 0; i < nodeCount; i++) {
-          const norm = i / nodeCount;
-          const bin = Math.floor(norm * 160);
-          const prime = i % 13 === 0;
-          const e = activeSourceType
-            ? freqData[bin] / 255
-            : (Math.sin(norm * 10 - phase) * 0.5 + 0.5) * 0.22;
-
-          const r = Math.sqrt(norm) * maxRadius + e * 26 * tension;
-          const th = i * currentAngle - phase * 0.5;
-          const x = r * Math.cos(th);
-          const y = r * Math.sin(th);
-
-          nodes[i] = { x, y, r, th, e, norm, prime };
-        }
-
-        // 8. Audio-Gated Connecting Dots (Fibonacci Parastichy Web: F_13, F_21, F_8)
-        let activeLinks = 0;
-        if (activeSourceType && audioGate > 0.02) {
-          const gate = Math.max(0.08, 0.22 - tension * 0.14);
-          ctx.lineWidth = 0.75 + smoothBass * 0.6;
-
-          for (let i = 0; i < nodeCount; i++) {
-            const n1 = nodes[i];
-            if (n1.e > gate) {
-              // Primary Golden Spiral Arm (i + 13)
-              if (i + 13 < nodeCount) {
-                const n2 = nodes[i + 13];
-                const alpha = Math.min(0.68, (n1.e - gate) * 1.35 * audioGate);
-                if (alpha > 0.02) {
-                  ctx.strokeStyle = `rgba(${pRgb[0]}, ${pRgb[1]}, ${pRgb[2]}, ${alpha})`;
-                  ctx.beginPath();
-                  ctx.moveTo(n1.x, n1.y);
-                  ctx.lineTo(n2.x, n2.y);
-                  ctx.stroke();
-                  activeLinks++;
-                }
-              }
-
-              // Counter-Rotating Geometric Web (i + 21)
-              if (i + 21 < nodeCount && n1.e > gate + 0.1) {
-                const n3 = nodes[i + 21];
-                const alpha = Math.min(0.48, (n1.e - gate) * 0.95 * audioGate);
-                if (alpha > 0.02) {
-                  ctx.strokeStyle = `rgba(${sRgb[0]}, ${sRgb[1]}, ${sRgb[2]}, ${alpha})`;
-                  ctx.beginPath();
-                  ctx.moveTo(n1.x, n1.y);
-                  ctx.lineTo(n3.x, n3.y);
-                  ctx.stroke();
-                  activeLinks++;
-                }
-              }
-
-              // Inner Core Sub-Bass Web (i + 8)
-              if (i + 8 < nodeCount && n1.norm < 0.45 && smoothBass > 0.2) {
-                const n4 = nodes[i + 8];
-                const alpha = Math.min(0.42, smoothBass * 0.65 * (1 - n1.norm) * audioGate);
-                if (alpha > 0.02) {
-                  ctx.strokeStyle = `rgba(${aRgb[0]}, ${aRgb[1]}, ${aRgb[2]}, ${alpha * 0.6})`;
-                  ctx.beginPath();
-                  ctx.moveTo(n1.x, n1.y);
-                  ctx.lineTo(n4.x, n4.y);
-                  ctx.stroke();
-                  activeLinks++;
-                }
-              }
+          if (bgMode === 0 && themeIdx === 5) {
+            // Sakura Theme Background: Gently falling diagonal cherry blossom petals
+            const drift = t * 18 * speedMult;
+            for (let i = 0; i < MAX_STARS; i++) {
+              const px = ((starR[i] * width + drift * (0.6 + (i % 3) * 0.2)) % width) - cx;
+              const py = ((starPhase[i] * 120 + drift * (0.8 + (i % 4) * 0.15)) % height) - cy;
+              const sz = starSz[i] * 1.45;
+              ctx.rect(px, py, sz, sz * 0.65);
+            }
+          } else if (bgMode === 0 && (themeIdx === 1 || themeIdx === 6)) {
+            // Aether / Abyssal Theme Background: Rising vertical data bits / deep-sea bubbles
+            const rise = t * 22 * speedMult;
+            for (let i = 0; i < MAX_STARS; i++) {
+              const px = Math.cos(starTh[i]) * starR[i] * outerScale;
+              const py = cy - ((starPhase[i] * 140 + rise * (0.5 + starR[i])) % height);
+              const sz = starSz[i] * 1.2;
+              ctx.rect(px, py, sz, sz);
+            }
+          } else {
+            // Standard Golden-Angle Orbital Starfield
+            const starOrbit = (t * 0.018 * speedMult) % TAU;
+            for (let i = 0; i < MAX_STARS; i++) {
+              const sr = starR[i] * outerScale;
+              const sth = starTh[i] + starOrbit * (1.2 - starR[i] * 0.5);
+              const sx = Math.cos(sth) * sr;
+              const sy = Math.sin(sth) * sr;
+              const sz = starSz[i];
+              ctx.rect(sx - sz * 0.5, sy - sz * 0.5, sz, sz);
             }
           }
-        }
-
-        // 9. Render Nodes
-        for (let i = 0; i < nodeCount; i++) {
-          const n = nodes[i];
-          const sz = 1.0 + n.e * 3.2 + (n.prime ? 0.65 : 0);
-          const alpha = 0.14 + (n.prime ? 0.45 : 0.12) + n.e * 0.38;
-
-          if (n.prime && (n.e > 0.2 || !activeSourceType)) {
-            const tailLen = (0.05 + smoothMid * 0.12) * (1 - n.norm * 0.4);
-            ctx.strokeStyle = `rgba(${pRgb[0]}, ${pRgb[1]}, ${pRgb[2]}, ${alpha * 0.45})`;
-            ctx.lineWidth = sz * 0.6;
-            ctx.beginPath();
-            ctx.arc(0, 0, n.r, n.th, n.th + tailLen);
-            ctx.stroke();
-          }
-
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, Math.max(0.5, sz), 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${n.e > 0.65 ? aRgb[0] : n.prime ? pRgb[0] : sRgb[0]}, ${n.e > 0.65 ? aRgb[1] : n.prime ? pRgb[1] : sRgb[1]}, ${e = n.e > 0.65 ? aRgb[2] : n.prime ? pRgb[2] : sRgb[2]}, ${alpha})`;
           ctx.fill();
         }
 
-        // Update HUD Matrix
-        telAngle.textContent = ((currentAngle * 180) / Math.PI).toFixed(4) + '°';
-        telBass.textContent = (smoothBass * 100).toFixed(1) + '%';
-        telCentroid.textContent = (smoothCentroid * 100).toFixed(1) + '%';
-        telNodes.textContent = nodeCount;
-        telZ.textContent = activeLinks;
+        // 6. Cached Ambient Core Nebula & Fixed-Pool Ripples
+        if (cachedCoreGrad) {
+          ctx.globalAlpha = 0.65 + smoothBass * 0.35;
+          ctx.fillStyle = cachedCoreGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, maxRadius * 0.68, 0, TAU);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = palette.p;
+        ctx.lineWidth = 0.85;
+        for (let i = 0; i < MAX_RIPPLES; i++) {
+          if (rippleA[i] > 0.01) {
+            rippleR[i] += (4.0 + smoothBass * 5) * speedMult;
+            rippleA[i] *= 0.95;
+            if (rippleR[i] > maxRadius) {
+              rippleA[i] = 0;
+              continue;
+            }
+            ctx.globalAlpha = rippleA[i];
+            ctx.beginPath();
+            ctx.arc(0, 0, rippleR[i], 0, TAU);
+            ctx.stroke();
+          }
+        }
+
+        // 7. Batched Escape Sparks
+        ctx.fillStyle = palette.a;
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        let hasActiveSparks = false;
+        for (let i = 0; i < MAX_SPARKS; i++) {
+          if (sparkLife[i] > 0.01) {
+            sparkX[i] += sparkVX[i];
+            sparkY[i] += sparkVY[i];
+            sparkLife[i] -= sparkDecay[i];
+            if (sparkLife[i] <= 0.01) continue;
+            const r = 1.3 * sparkLife[i];
+            ctx.moveTo(sparkX[i] + r, sparkY[i]);
+            ctx.arc(sparkX[i], sparkY[i], r, 0, TAU);
+            hasActiveSparks = true;
+          }
+        }
+        if (hasActiveSparks) ctx.fill();
+
+        // 8. Continuous 2D Golden Spiral
+        const limitR = maxRadius * 1.15;
+        const waveScale = 18 * tension * (0.5 + smoothBass * 0.5);
+        ctx.beginPath();
+        for (let i = 0; i <= SPIRAL_STEPS; i++) {
+          const baseR = spiralBaseR[i];
+          if (baseR > limitR) break;
+
+          const pct = spiralPct[i];
+          const th = pct * Math.PI * 8.0 - phase * 1.5;
+          const wave = hasAudioSignal
+            ? (timeData[spiralBin[i]] - 128) * 0.0078125
+            : Math.sin(pct * 25 - (t * 4) % TAU) * 0.1;
+
+          const r = baseR + wave * waveScale;
+          const x = r * Math.cos(th);
+          const y = r * Math.sin(th);
+
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = palette.p;
+        ctx.globalAlpha = 0.35 + smoothMid * 0.35;
+        ctx.lineWidth = 1.2 + smoothBass * 1.6;
+        ctx.stroke();
+
+        // 9. Compute Phyllotaxis Node Positions into TypedArrays
+        const invCount = 1 / nodeCount;
+        const phaseHalf = phase * 0.5;
+        const tension26 = 26 * tension;
+
+        for (let i = 0; i < nodeCount; i++) {
+          const norm = i * invCount;
+          const bin = (norm * 160) | 0;
+          const e = hasAudioSignal
+            ? freqData[bin] * 0.0039215686
+            : (Math.sin(norm * 10 - phase) * 0.5 + 0.5) * 0.22;
+
+          const r = Math.sqrt(norm) * maxRadius + e * tension26;
+          const th = i * currentAngle - phaseHalf;
+
+          nodeX[i] = r * Math.cos(th);
+          nodeY[i] = r * Math.sin(th);
+          nodeR[i] = r;
+          nodeTh[i] = th;
+          nodeE[i] = e;
+          nodeNorm[i] = norm;
+        }
+
+        // 10. GPU-Batched Audio-Gated Connecting Dots
+        let activeLinks = 0;
+        if (showWeb && hasAudioSignal && audioGate > 0.02) {
+          const gate = Math.max(0.08, 0.22 - tension * 0.14);
+          ctx.lineWidth = 0.75 + smoothBass * 0.6;
+
+          ctx.strokeStyle = palette.p;
+          ctx.globalAlpha = Math.min(0.55, (0.18 + smoothMid * 0.45) * audioGate);
+          ctx.beginPath();
+          for (let i = 0; i < nodeCount - 13; i++) {
+            if (nodeE[i] > gate) {
+              ctx.moveTo(nodeX[i], nodeY[i]);
+              ctx.lineTo(nodeX[i + 13], nodeY[i + 13]);
+              activeLinks++;
+            }
+          }
+          ctx.stroke();
+
+          const gate21 = gate + 0.1;
+          ctx.strokeStyle = palette.s;
+          ctx.globalAlpha = Math.min(0.42, (0.14 + smoothHigh * 0.4) * audioGate);
+          ctx.beginPath();
+          for (let i = 0; i < nodeCount - 21; i++) {
+            if (nodeE[i] > gate21) {
+              ctx.moveTo(nodeX[i], nodeY[i]);
+              ctx.lineTo(nodeX[i + 21], nodeY[i + 21]);
+              activeLinks++;
+            }
+          }
+          ctx.stroke();
+
+          if (smoothBass > 0.2) {
+            const coreLimit = Math.min(nodeCount - 8, (nodeCount * 0.45) | 0);
+            ctx.strokeStyle = palette.a;
+            ctx.globalAlpha = Math.min(0.32, smoothBass * 0.45 * audioGate);
+            ctx.beginPath();
+            for (let i = 0; i < coreLimit; i++) {
+              if (nodeE[i] > gate) {
+                ctx.moveTo(nodeX[i], nodeY[i]);
+                ctx.lineTo(nodeX[i + 8], nodeY[i + 8]);
+                activeLinks++;
+              }
+            }
+            ctx.stroke();
+          }
+        }
+
+        // 11. GPU-Batched Matte Nodes & Tangential Tails
+        const baseTail = 0.05 + smoothMid * 0.12;
+
+        ctx.strokeStyle = palette.p;
+        ctx.globalAlpha = 0.28 + smoothMid * 0.18;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        for (let i = 0; i < nodeCount; i += 13) {
+          if (nodeE[i] > 0.2 || !hasAudioSignal) {
+            const tailLen = baseTail * (1 - nodeNorm[i] * 0.4);
+            const r = nodeR[i], th = nodeTh[i];
+            ctx.moveTo(r * Math.cos(th), r * Math.sin(th));
+            ctx.arc(0, 0, r, th, th + tailLen);
+          }
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = palette.s;
+        ctx.globalAlpha = 0.26 + smoothMid * 0.2;
+        ctx.beginPath();
+        for (let i = 0; i < nodeCount; i++) {
+          if (i % 13 !== 0 && nodeE[i] <= 0.65) {
+            const sz = 1.0 + nodeE[i] * 3.2;
+            const x = nodeX[i], y = nodeY[i];
+            ctx.moveTo(x + sz, y);
+            ctx.arc(x, y, sz, 0, TAU);
+          }
+        }
+        ctx.fill();
+
+        ctx.fillStyle = palette.p;
+        ctx.globalAlpha = 0.65 + smoothBass * 0.25;
+        ctx.beginPath();
+        for (let i = 0; i < nodeCount; i += 13) {
+          if (nodeE[i] <= 0.65) {
+            const sz = 1.65 + nodeE[i] * 3.2;
+            const x = nodeX[i], y = nodeY[i];
+            ctx.moveTo(x + sz, y);
+            ctx.arc(x, y, sz, 0, TAU);
+          }
+        }
+        ctx.fill();
+
+        ctx.fillStyle = palette.a;
+        ctx.globalAlpha = 0.92;
+        ctx.beginPath();
+        let hasPeakNodes = false;
+        for (let i = 0; i < nodeCount; i++) {
+          if (nodeE[i] > 0.65) {
+            const sz = 1.5 + nodeE[i] * 3.4;
+            const x = nodeX[i], y = nodeY[i];
+            ctx.moveTo(x + sz, y);
+            ctx.arc(x, y, sz, 0, TAU);
+            hasPeakNodes = true;
+          }
+        }
+        if (hasPeakNodes) ctx.fill();
 
         ctx.restore();
+
+        // 12. Throttled DOM Telemetry Updates (6 FPS)
+        if (frameCount % 10 === 0) {
+          telAngle.textContent = ((currentAngle * 180) / Math.PI).toFixed(4) + '°';
+          telBass.textContent = (smoothBass * 100).toFixed(1) + '%';
+          telCentroid.textContent = (smoothCentroid * 100).toFixed(1) + '%';
+          telNodes.textContent = nodeCount;
+          telZ.textContent = activeLinks;
+
+          if (autoTune) {
+            nodeSlider.value = nodeCount;
+            lblNodes.textContent = nodeCount;
+            const tenPct = Math.round(tension * 100);
+            tensionSlider.value = tenPct;
+            lblTension.textContent = tenPct + '%';
+          }
+
+          if (beatLockedThisFrame || beatCooldown > 6) {
+            badgeBeat.textContent = 'TRANSIENT: LOCKED';
+            badgeBeat.style.borderColor = palette.hex;
+          } else {
+            badgeBeat.textContent = 'TRANSIENT: SYNC';
+            badgeBeat.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          }
+        }
       }
 
       requestAnimationFrame(render);
